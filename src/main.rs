@@ -6,8 +6,10 @@ struct Position {
     y: i32,
 }
 
-const ROOM_WIDTH: u32 = 10;
-const ROOM_HEIGHT: u32 = 10;
+const ROOM_WIDTH: u32 = 40;
+const ROOM_HEIGHT: u32 = 40;
+
+const TILE_WIDTH: u32 = 20;
 
 struct Wall;
 
@@ -19,7 +21,9 @@ struct Player {
 
 struct Creature;
 
-struct WallMaterial(Handle<ColorMaterial>);
+struct PermaWallMaterial(Handle<ColorMaterial>);
+
+struct DestructableWallMaterial(Handle<ColorMaterial>);
 
 struct FloorMaterial(Handle<ColorMaterial>);
 
@@ -37,8 +41,11 @@ enum Direction {
 
 fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
     commands.spawn(Camera2dComponents::default());
-    commands.insert_resource(WallMaterial(
-        materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+    commands.insert_resource(PermaWallMaterial(
+        materials.add(Color::rgb(0.2, 1.0, 0.7).into()),
+    ));
+    commands.insert_resource(DestructableWallMaterial(
+        materials.add(Color::rgb(1.0, 1.0, 0.7).into()),
     ));
     commands.insert_resource(FloorMaterial(
         materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
@@ -59,32 +66,65 @@ fn game_setup_player(
     commands
         .spawn(SpriteComponents {
             material: player_material.0.clone(),
-            sprite: Sprite::new(Vec2::new(10.0, 10.0)),
+            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
             ..Default::default()
         })
         .with(Player {
             direction: Direction::Right,
         })
-        .with(Position { x: 4, y: 5 });
+        .with(Position { x: 0, y: 0 });
 
-    for (_player, mut transform) in &mut player_position.iter_mut() {
-        transform.translation += Vec3::new(10.0, 0.0, 0.0);
-    }
+    // for (_player, mut transform) in &mut player_position.iter_mut() {
+    //     transform.translation += Vec3::new(10.0, 0.0, 0.0);
+    // }
 }
 
 fn game_setup_room(
     mut commands: Commands,
-    wall_material: Res<WallMaterial>,
+    perma_wall_material: Res<PermaWallMaterial>,
+    destructable_wall_material: Res<DestructableWallMaterial>,
     mut wall_position: Query<(&Wall, &mut Transform)>,
 ) {
-    commands
-        .spawn(SpriteComponents {
-            material: wall_material.0.clone(),
-            sprite: Sprite::new(Vec2::new(10.0, 10.0)),
-            ..Default::default()
-        })
-        .with(Wall)
-        .with(Position { x: 7, y: 8 });
+    let room_map = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 2, 2, 0, 0, 0, 0, 2, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ];
+
+    for (row_index, row) in room_map.iter().enumerate() {
+        for (col_index, cell) in row.iter().enumerate() {
+            if *cell == 0 {
+                continue;
+            }
+            commands
+                .spawn(SpriteComponents {
+                    material: if *cell == 2 {
+                        destructable_wall_material.0.clone()
+                    } else {
+                        perma_wall_material.0.clone()
+                    },
+                    sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                    ..Default::default()
+                })
+                .with(Wall)
+                .with(Position {
+                    x: (TILE_WIDTH * (col_index as u32)) as i32,
+                    y: (TILE_WIDTH * ((room_map.len() - row_index) as u32)) as i32,
+                });
+        }
+    }
+
+    // for (_player, mut transform) in &mut player_position.iter_mut() {
+    //     transform.translation += Vec3::new(10.0, 0.0, 0.0);
+    // }
 }
 
 fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Transform)>) {
@@ -95,8 +135,8 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     let window = windows.get_primary().unwrap();
     for (pos, mut transform) in q.iter_mut() {
         transform.translation = Vec3::new(
-            convert(pos.x as f32, window.width() as f32, ROOM_WIDTH as f32),
-            convert(pos.y as f32, window.height() as f32, ROOM_HEIGHT as f32),
+            pos.x as f32, //convert(pos.x as f32, window.width() as f32, ROOM_WIDTH as f32),
+            pos.y as f32, //convert(pos.y as f32, window.height() as f32, ROOM_HEIGHT as f32),
             0.0,
         );
     }
@@ -139,7 +179,7 @@ fn player_movement(
             player.direction
         };
 
-        change_position(player_position, ROOM_WIDTH, ROOM_HEIGHT, &player.direction);
+        // change_position(player_position, ROOM_WIDTH, ROOM_HEIGHT, &player.direction);
 
         // if player_position.x < 0
         //     || player_position.y < 0
