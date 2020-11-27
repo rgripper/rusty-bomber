@@ -6,10 +6,8 @@ struct Position {
     y: i32,
 }
 
-const ROOM_WIDTH: u32 = 40;
-const ROOM_HEIGHT: u32 = 40;
-
 const TILE_WIDTH: u32 = 20;
+const SIDE_TILE_COUNT: u32 = 10;
 
 struct Wall;
 
@@ -17,6 +15,7 @@ struct Destructable;
 
 struct Player {
     direction: Direction,
+    is_moving: bool,
 }
 
 struct Creature;
@@ -70,6 +69,7 @@ fn game_setup_player(
             ..Default::default()
         })
         .with(Player {
+            is_moving: false,
             direction: Direction::Right,
         })
         .with(Position { x: 0, y: 0 });
@@ -117,7 +117,7 @@ fn game_setup_room(
                 .with(Wall)
                 .with(Position {
                     x: (TILE_WIDTH * (col_index as u32)) as i32,
-                    y: (TILE_WIDTH * ((room_map.len() - row_index) as u32)) as i32,
+                    y: (TILE_WIDTH * ((room_map.len() - row_index - 1) as u32)) as i32,
                 });
         }
     }
@@ -142,19 +142,25 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     }
 }
 
-fn change_position(position: &mut Mut<Position>, width: u32, height: u32, direction: &Direction) {
+fn change_position(
+    position: &mut Mut<Position>,
+    width: u32,
+    height: u32,
+    direction: &Direction,
+    velocity: u32,
+) {
     match direction {
         Direction::Left => {
-            position.x = max(0, position.x - 1);
+            position.x = max(0, position.x - velocity as i32);
         }
         Direction::Right => {
-            position.x = min(width as i32, position.x + 1);
+            position.x = min(width as i32, position.x + velocity as i32);
         }
         Direction::Up => {
-            position.y = min(height as i32, position.y + 1);
+            position.y = min(height as i32, position.y + velocity as i32);
         }
         Direction::Down => {
-            position.y = max(0, position.y - 1);
+            position.y = max(0, position.y - velocity as i32);
         }
     };
 }
@@ -167,19 +173,37 @@ fn player_movement(
 ) {
     if let Some((player_entity, mut player)) = players.iter_mut().next() {
         let player_position = &mut player_query.get_mut(player_entity).unwrap();
-        player.direction = if keyboard_input.pressed(KeyCode::Left) {
-            Direction::Left
+        let movement_action = if keyboard_input.pressed(KeyCode::Left) {
+            Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
-            Direction::Down
+            Some(Direction::Down)
         } else if keyboard_input.pressed(KeyCode::Up) {
-            Direction::Up
+            Some(Direction::Up)
         } else if keyboard_input.pressed(KeyCode::Right) {
-            Direction::Right
+            Some(Direction::Right)
         } else {
-            player.direction
+            None
         };
 
-        // change_position(player_position, ROOM_WIDTH, ROOM_HEIGHT, &player.direction);
+        match movement_action {
+            Some(direction) => {
+                player.direction = direction;
+                player.is_moving = true;
+            }
+            None => {
+                player.is_moving = false;
+            }
+        }
+
+        if player.is_moving {
+            change_position(
+                player_position,
+                TILE_WIDTH * SIDE_TILE_COUNT,
+                TILE_WIDTH * SIDE_TILE_COUNT,
+                &player.direction,
+                2,
+            )
+        }
 
         // if player_position.x < 0
         //     || player_position.y < 0
