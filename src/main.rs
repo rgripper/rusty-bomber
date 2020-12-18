@@ -142,37 +142,75 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     }
 }
 
+fn get_position(player_entity: Entity, position_query: &mut Query<&mut Position>) -> Position {
+    let position = &mut position_query.get_mut(player_entity).unwrap();
+    return Position {
+        x: position.x,
+        y: position.y,
+    };
+}
+
 fn change_position(
-    position: &mut Mut<Position>,
+    player_entity: &Entity,
     width: u32,
     height: u32,
     direction: &Direction,
     velocity: u32,
+    position_query: &mut Query<&mut Position>,
 ) {
+    let position = get_position(*player_entity, position_query);
+
+    let mut x = position.x;
+    let mut y = position.y;
     match direction {
         Direction::Left => {
-            position.x = max(0, position.x - velocity as i32);
+            x = max(0, x - velocity as i32);
         }
         Direction::Right => {
-            position.x = min(width as i32, position.x + velocity as i32);
+            x = min(width as i32, x + velocity as i32);
         }
         Direction::Up => {
-            position.y = min(height as i32, position.y + velocity as i32);
+            y = min(height as i32, y + velocity as i32);
         }
         Direction::Down => {
-            position.y = max(0, position.y - velocity as i32);
+            y = max(0, y - velocity as i32);
         }
     };
+
+    let mut intersects_ = false;
+    for pos in position_query.iter_mut() {
+        if intersects(x, y, width, height, pos.x, pos.y, width, height) {
+            intersects_ = true
+        }
+    }
+
+    if !intersects_ {
+        let position = &mut position_query.get_mut(*player_entity).unwrap();
+        position.x = x;
+        position.y = y;
+    }
+}
+
+fn intersects(
+    x1: i32,
+    y1: i32,
+    width1: u32,
+    height1: u32,
+    x2: i32,
+    y2: i32,
+    width2: u32,
+    height2: u32,
+) -> bool {
+    return false;
 }
 
 fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     // mut game_over_events: ResMut<Events<GameOverEvent>>,
     mut players: Query<(Entity, &mut Player)>,
-    mut player_query: Query<&mut Position>,
+    mut position_query: Query<&mut Position>,
 ) {
     if let Some((player_entity, mut player)) = players.iter_mut().next() {
-        let player_position = &mut player_query.get_mut(player_entity).unwrap();
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
             Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
@@ -197,11 +235,12 @@ fn player_movement(
 
         if player.is_moving {
             change_position(
-                player_position,
+                &player_entity,
                 TILE_WIDTH * SIDE_TILE_COUNT,
                 TILE_WIDTH * SIDE_TILE_COUNT,
                 &player.direction,
                 2,
+                &mut position_query,
             )
         }
 
