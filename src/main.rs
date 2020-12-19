@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use std::cmp::*;
 
+#[derive(Debug)]
 struct Position {
     x: i32,
     y: i32,
@@ -72,7 +73,7 @@ fn game_setup_player(
             is_moving: false,
             direction: Direction::Right,
         })
-        .with(Position { x: 0, y: 0 });
+        .with(Position { x: 20, y: 20 });
 
     // for (_player, mut transform) in &mut player_position.iter_mut() {
     //     transform.translation += Vec3::new(10.0, 0.0, 0.0);
@@ -142,8 +143,11 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     }
 }
 
-fn get_position(player_entity: Entity, position_query: &mut Query<&mut Position>) -> Position {
-    let position = &mut position_query.get_mut(player_entity).unwrap();
+fn get_position(
+    player_entity: Entity,
+    position_query: &mut Query<(Entity, &mut Position)>,
+) -> Position {
+    let (_, position) = &mut position_query.get_mut(player_entity).unwrap();
     return Position {
         x: position.x,
         y: position.y,
@@ -156,7 +160,7 @@ fn change_position(
     height: u32,
     direction: &Direction,
     velocity: u32,
-    position_query: &mut Query<&mut Position>,
+    position_query: &mut Query<(Entity, &mut Position)>,
 ) {
     let position = get_position(*player_entity, position_query);
 
@@ -178,14 +182,18 @@ fn change_position(
     };
 
     let mut intersects_ = false;
-    for pos in position_query.iter_mut() {
-        if intersects(x, y, width, height, pos.x, pos.y, width, height) {
+    for (entity, pos) in position_query.iter_mut() {
+        if entity != *player_entity
+            && intersects(
+                x, y, TILE_WIDTH, TILE_WIDTH, pos.x, pos.y, TILE_WIDTH, TILE_WIDTH,
+            )
+        {
             intersects_ = true
         }
     }
 
     if !intersects_ {
-        let position = &mut position_query.get_mut(*player_entity).unwrap();
+        let (_, position) = &mut position_query.get_mut(*player_entity).unwrap();
         position.x = x;
         position.y = y;
     }
@@ -201,14 +209,19 @@ fn intersects(
     width2: u32,
     height2: u32,
 ) -> bool {
-    return false;
+    let right1 = x1 + width1 as i32 - 1;
+    let right2 = x2 + width2 as i32 - 1;
+    let top1 = y1 + height1 as i32 - 1;
+    let top2 = y2 + height2 as i32 - 1;
+
+    return !(x2 > right1 || right2 < x1 || top2 < y1 || y2 > top1);
 }
 
 fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     // mut game_over_events: ResMut<Events<GameOverEvent>>,
     mut players: Query<(Entity, &mut Player)>,
-    mut position_query: Query<&mut Position>,
+    mut position_query: Query<(Entity, &mut Position)>,
 ) {
     if let Some((player_entity, mut player)) = players.iter_mut().next() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
@@ -239,7 +252,7 @@ fn player_movement(
                 TILE_WIDTH * SIDE_TILE_COUNT,
                 TILE_WIDTH * SIDE_TILE_COUNT,
                 &player.direction,
-                2,
+                1,
                 &mut position_query,
             )
         }
