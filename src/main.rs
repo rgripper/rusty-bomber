@@ -82,7 +82,6 @@ fn game_setup_player(
 
 fn game_setup_room(
     commands: &mut Commands,
-
     perma_wall_material: Res<PermaWallMaterial>,
     destructable_wall_material: Res<DestructableWallMaterial>,
     mut wall_position: Query<(&Wall, &mut Transform)>,
@@ -103,24 +102,37 @@ fn game_setup_room(
 
     for (row_index, row) in room_map.iter().enumerate() {
         for (col_index, cell) in row.iter().enumerate() {
-            if *cell == 0 {
-                continue;
+            // Using match here makes it easier to extend the map
+            match *cell {
+                1 => {
+                    commands
+                        .spawn(SpriteBundle {
+                            material: perma_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            ..Default::default()
+                        })
+                        .with(Wall)
+                        .with(Position {
+                            x: (TILE_WIDTH * (col_index as u32)) as i32,
+                            y: (TILE_WIDTH * ((room_map.len() - row_index - 1) as u32)) as i32,
+                        });
+                }
+
+                2 => {
+                    commands
+                        .spawn(SpriteBundle {
+                            material: destructable_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            ..Default::default()
+                        })
+                        .with(Wall)
+                        .with(Position {
+                            x: (TILE_WIDTH * (col_index as u32)) as i32,
+                            y: (TILE_WIDTH * ((room_map.len() - row_index - 1) as u32)) as i32,
+                        });
+                }
+                _ => continue,
             }
-            commands
-                .spawn(SpriteBundle {
-                    material: if *cell == 2 {
-                        destructable_wall_material.0.clone()
-                    } else {
-                        perma_wall_material.0.clone()
-                    },
-                    sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
-                    ..Default::default()
-                })
-                .with(Wall)
-                .with(Position {
-                    x: (TILE_WIDTH * (col_index as u32)) as i32,
-                    y: (TILE_WIDTH * ((room_map.len() - row_index - 1) as u32)) as i32,
-                });
         }
     }
 
@@ -267,14 +279,14 @@ fn player_movement(
         // }
     }
 }
-const GMAE_SETUP:&str = "game_setup";
+const GMAE_SETUP: &str = "game_setup";
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
-        .add_startup_stage(GMAE_SETUP,SystemStage::parallel()) // <--
-        .add_startup_system_to_stage(GMAE_SETUP,game_setup_player.system())
-        .add_startup_system_to_stage(GMAE_SETUP,game_setup_room.system())
+        .add_startup_stage(GMAE_SETUP, SystemStage::parallel()) // <--
+        .add_startup_system_to_stage(GMAE_SETUP, game_setup_player.system())
+        .add_startup_system_to_stage(GMAE_SETUP, game_setup_room.system())
         .add_system(position_translation.system())
         .add_system(player_movement.system())
         .run();
