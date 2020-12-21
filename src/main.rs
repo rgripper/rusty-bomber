@@ -39,8 +39,8 @@ enum Direction {
     Down,
 }
 
-fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
-    commands.spawn(Camera2dComponents::default());
+fn setup(commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
+    commands.spawn(Camera2dBundle::default());
     commands.insert_resource(PermaWallMaterial(
         materials.add(Color::rgb(0.2, 1.0, 0.7).into()),
     ));
@@ -59,12 +59,12 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
 }
 
 fn game_setup_player(
-    mut commands: Commands,
+    commands: &mut Commands,
     player_material: Res<PlayerMaterial>,
     mut player_position: Query<(&Player, &mut Transform)>,
 ) {
     commands
-        .spawn(SpriteComponents {
+        .spawn(SpriteBundle {
             material: player_material.0.clone(),
             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
             ..Default::default()
@@ -81,7 +81,8 @@ fn game_setup_player(
 }
 
 fn game_setup_room(
-    mut commands: Commands,
+    commands: &mut Commands,
+
     perma_wall_material: Res<PermaWallMaterial>,
     destructable_wall_material: Res<DestructableWallMaterial>,
     mut wall_position: Query<(&Wall, &mut Transform)>,
@@ -106,7 +107,7 @@ fn game_setup_room(
                 continue;
             }
             commands
-                .spawn(SpriteComponents {
+                .spawn(SpriteBundle {
                     material: if *cell == 2 {
                         destructable_wall_material.0.clone()
                     } else {
@@ -266,15 +267,15 @@ fn player_movement(
         // }
     }
 }
-
+const GMAE_SETUP:&str = "game_setup";
 fn main() {
     App::build()
+        .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
-        .add_startup_stage("game_setup") // <--
-        .add_startup_system_to_stage("game_setup", game_setup_player.system())
-        .add_startup_system_to_stage("game_setup", game_setup_room.system())
+        .add_startup_stage(GMAE_SETUP,SystemStage::parallel()) // <--
+        .add_startup_system_to_stage(GMAE_SETUP,game_setup_player.system())
+        .add_startup_system_to_stage(GMAE_SETUP,game_setup_room.system())
         .add_system(position_translation.system())
         .add_system(player_movement.system())
-        .add_plugins(DefaultPlugins)
         .run();
 }
