@@ -1,28 +1,7 @@
 use bevy::prelude::*;
 
-// TODO: should be one represent one tile
-#[derive(Debug)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-impl Position {
-    pub fn set(&mut self, x: i32, y: i32) {
-        self.x = x;
-        self.y = y;
-    }
-    pub fn set_x(&mut self, x: i32) {
-        self.x = x;
-    }
-    pub fn set_y(&mut self, y: i32) {
-        self.y = y;
-    }
-}
-
-const TILE_WIDTH: i32 = 20;
-// TODD:should be removed this, it prevents scalability
-const SIDE_TILE_COUNT: i32 = 10;
+const TILE_WIDTH: f32 = 20.0;
+const HALF_TILE_WIDTH: f32 = 10.0;
 
 struct Wall;
 
@@ -91,13 +70,14 @@ fn game_setup_room(
                         .spawn(SpriteBundle {
                             material: perma_wall_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
-                        .with(Wall)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        });
+                        .with(Wall);
                 }
 
                 2 => {
@@ -105,13 +85,14 @@ fn game_setup_room(
                         .spawn(SpriteBundle {
                             material: destructable_wall_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
-                        .with(Wall)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        });
+                        .with(Wall);
                 }
                 // When setting each level, the player’s position should be set flexibly
                 3 => {
@@ -119,15 +100,16 @@ fn game_setup_room(
                         .spawn(SpriteBundle {
                             material: player_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
                         .with(Player { is_moving: false })
                         .with(Direction::Right)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        })
-                        .with(Velocity::new(0.1));
+                        .with(Velocity::new(2.0));
                 }
                 _ => continue,
             }
@@ -142,18 +124,7 @@ fn game_setup_room(
 // const ROOM_WIDTH:u32 = TILE_WIDTH * 11;
 // const ROOM_HEIGHT:u32 = TILE_WIDTH * 11;
 
-fn position_translation(mut q: Query<(&Position, &mut Transform)>) {
-    for (pos, mut transform) in q.iter_mut() {
-        transform.translation = Vec3::new(
-            (TILE_WIDTH * pos.x) as f32,
-            (TILE_WIDTH * pos.y) as f32,
-            0.0,
-        );
-    }
-}
 struct Map {
-    height: i32,
-    width: i32,
     value: Vec<Vec<i32>>,
 }
 impl Map {
@@ -171,34 +142,11 @@ impl Map {
             vec![1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ];
-        Self {
-            height: 11,
-            width: 11,
-            value: room_map,
-        }
+        Self { value: room_map }
     }
 
     pub fn map_value(&self) -> &Vec<Vec<i32>> {
         &self.value
-    }
-    pub fn height(&self) -> i32 {
-        self.height
-    }
-    pub fn width(&self) -> i32 {
-        self.width
-    }
-    pub fn intersects(&self, x: i32, y: i32) -> bool {
-        // x: (col_index as u32) as i32,
-        // y: ((room_map.len() - row_index - 1) as u32) as i32,
-        let len = self.value.len();
-        if let Some(row) = self.value.get(len - y as usize - 1) {
-            if let Some(num) = row.get(x as usize) {
-                if *num == 0 || *num == 3 {
-                    return true;
-                }
-            }
-        }
-        false
     }
 }
 // ok
@@ -235,27 +183,35 @@ fn change_direction(
 }
 
 fn player_movement(
-    map_resource: Res<Map>,
-    time: Res<Time>,
-    mut query: Query<(&mut Velocity, &Player, &Direction, &mut Position), (Changed<Player>)>,
+    wall_position: Query<(&Transform), (With<Wall>, Without<Player>)>,
+    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), (Changed<Player>)>,
 ) {
-    for (mut velocity, player, direction, mut position) in query.iter_mut() {
+    for (velocity, player, direction, mut player_transform) in query.iter_mut() {
         if player.is_moving {
-            let mut x = position.x;
-            let mut y = position.y;
+            let mut x = player_transform.translation.x;
+            let mut y = player_transform.translation.y;
 
             match direction {
-                Direction::Left => x -= 1,
-                Direction::Up => y += 1,
-                Direction::Right => x += 1,
-                Direction::Down => y -= 1,
+                Direction::Left => x -= velocity.value,
+                Direction::Up => y += velocity.value,
+                Direction::Right => x += velocity.value,
+                Direction::Down => y -= velocity.value,
             }
 
-            // println!("{:?}",map_resource.intersects(x, y));
-            // println!("{:?}", velocity.finished(time.delta_seconds()));
-            if map_resource.intersects(x, y) && velocity.finished(time.delta_seconds()) {
-                println!("here!");
-                position.set(x, y);
+            let mut intersects = true;
+            for transform in wall_position.iter() {
+                let one = transform.translation;
+
+                let collision_x = one.x + TILE_WIDTH > x && x + TILE_WIDTH > one.x;
+                let collision_y = one.y + TILE_WIDTH > y && y + TILE_WIDTH > one.y;
+                if collision_x && collision_y {
+                    // TODO: need smart fix step length here
+                    
+                    intersects = false;
+                }
+            }
+            if intersects {
+                player_transform.translation = Vec3::new(x, y, 0.0);
             }
         }
     }
@@ -265,20 +221,15 @@ const GMAE_SETUP: &str = "game_setup";
 const MOVEMENT: &str = "movement";
 
 struct Velocity {
-    timer: Timer,
+    value: f32,
 }
 
 impl Velocity {
     pub fn new(value: f32) -> Self {
-        let timer = Timer::from_seconds(value, true);
-        Self { timer }
+        Self { value }
     }
     pub fn set(&mut self, value: f32) {
-        self.timer.set_duration(value);
-    }
-    pub fn finished(&mut self,delta: f32) -> bool {
-        // TODO: here will be replaced by a better way
-        self.timer.tick(delta).just_finished()
+        self.value = value;
     }
 }
 
@@ -292,6 +243,5 @@ fn main() {
         .add_stage(MOVEMENT, SystemStage::serial())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
-        .add_system(position_translation.system())
         .run();
 }
