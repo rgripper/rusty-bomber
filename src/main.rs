@@ -119,7 +119,7 @@ fn game_setup_room(
                         })
                         .with(Player { is_moving: false })
                         .with(Direction::Right)
-                        .with(Velocity(1.5));
+                        .with(Velocity(1.0));
                 }
                 _ => {
                     commands.spawn((
@@ -221,29 +221,34 @@ fn player_movement(
             }
 
             let mut intersects = true;
-            'for_loop: for transform in wall_position.iter() {
+            let mut have_way = false;
+            for transform in wall_position.iter() {
                 let one = transform.translation;
 
                 if aabb_detection(x, y, one) {
-                    request_repair_events
-                        .send(RequestRepairEvent(player_transform.translation, *direction));
+                    request_repair_events.send(RequestRepairEvent(
+                        player_transform.translation,
+                        *direction,
+                    ));
                     for position in fixed_move_event_reader.iter(&fixed_move_event) {
                         match position {
                             FixedMoveEvent::HaveWay(p) => {
-                                if aabb_detection(p.x, p.y, one) {
-                                    intersects = false;
-                                } else {
-                                    x = p.x;
-                                    y = p.y;
-                                }
+                                have_way = true;
+                                x = p.x;
+                                y = p.y;
                             }
-                            _ => intersects = false,
+                            _ => {}
                         }
                     }
-                    break 'for_loop;
+                    intersects = false;
                 }
             }
+
+            // println!("x: {},y: {}", x, y);
             if intersects {
+                player_transform.translation = Vec3::new(x, y, 0.0);
+            }
+            if have_way {
                 player_transform.translation = Vec3::new(x, y, 0.0);
             }
         }
@@ -258,16 +263,17 @@ fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
 fn fix_player_translation(
     direction: Direction,
     translation: Vec3,
-    way_transform: Vec3,
+    way_translation: Vec3,
     threshold: f32,
 ) -> Option<Vec3> {
     match direction {
         Direction::Left | Direction::Right => {
             // fix up or down distance
             // fix -> y value
-            let way_y = way_transform.y;
+            let way_y = way_translation.y;
             let y = translation.y;
-            if way_y - y < threshold {
+            // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
+            if (way_y - y).abs() < threshold {
                 Some(Vec3::new(translation.x, way_y, 0.0))
             } else {
                 None
@@ -276,9 +282,9 @@ fn fix_player_translation(
         Direction::Up | Direction::Down => {
             // fix left or right distance
             // fix -> x value
-            let way_x = way_transform.x;
+            let way_x = way_translation.x;
             let x = translation.x;
-            if way_x - x < threshold {
+            if (way_x - x).abs() < threshold {
                 Some(Vec3::new(way_x, translation.y, 0.0))
             } else {
                 None
@@ -299,7 +305,7 @@ fn road_detection(
         let x = position.x;
         let y = position.y;
 
-        'for_loop: for transform in way_position.iter() {
+        for transform in way_position.iter() {
             let one = transform.translation;
 
             let collision_x = one.x + TILE_WIDTH > x && x + TILE_WIDTH > one.x;
@@ -312,7 +318,6 @@ fn road_detection(
                 } else {
                     fixed_move_events.send(FixedMoveEvent::NoWay);
                 }
-                break 'for_loop;
             }
         }
     }
@@ -328,13 +333,18 @@ enum FixedMoveEvent {
 struct Velocity(f32);
 struct Threshold(f32);
 
+fn is_point_in_the_tile(tile: Vec3, point: Vec3) -> bool {
+    point.x > tile.x
+        && point.y > tile.y
+        && point.x - tile.x < TILE_WIDTH
+        && point.y - tile.y < TILE_WIDTH
+}
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
         .add_resource(Map::first())
-        // TODO: Strange Bugs are triggered when the threshold is below 20
-        .add_resource(Threshold(20.0))
+        .add_resource(Threshold(12.0))
         .add_event::<FixedMoveEvent>()
         .add_event::<RequestRepairEvent>()
         .add_startup_stage(GMAE_SETUP, SystemStage::parallel()) // <--

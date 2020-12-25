@@ -244,6 +244,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c16660356e9a79666848ff247aecaa30d9a7bb233e902035140b32d47d0b1345"
 dependencies = [
+ "bevy_dylib",
  "bevy_internal",
 ]
 
@@ -349,6 +350,15 @@ dependencies = [
  "bevy_ecs",
  "bevy_utils",
  "parking_lot",
+]
+
+[[package]]
+name = "bevy_dylib"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ca6cde7102d630520041b66e52a4f383449ee79337549fa38085f92fb451f15"
+dependencies = [
+ "bevy_internal",
 ]
 
 [[package]]
