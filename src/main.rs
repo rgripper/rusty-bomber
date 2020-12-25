@@ -1,31 +1,10 @@
 use bevy::prelude::*;
 
-// TODO: should be one represent one tile
-#[derive(Debug)]
-struct Position {
-    x: i32,
-    y: i32,
-}
-
-impl Position {
-    pub fn set(&mut self, x: i32, y: i32) {
-        self.x = x;
-        self.y = y;
-    }
-    pub fn set_x(&mut self, x: i32) {
-        self.x = x;
-    }
-    pub fn set_y(&mut self, y: i32) {
-        self.y = y;
-    }
-}
-
-const TILE_WIDTH: i32 = 20;
-// TODD:should be removed this, it prevents scalability
-const SIDE_TILE_COUNT: i32 = 10;
+const TILE_WIDTH: f32 = 20.0;
+const HALF_TILE_WIDTH: f32 = 10.0;
 
 struct Wall;
-
+struct Way;
 struct Destructable;
 
 struct Player {
@@ -91,13 +70,14 @@ fn game_setup_room(
                         .spawn(SpriteBundle {
                             material: perma_wall_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
-                        .with(Wall)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        });
+                        .with(Wall);
                 }
 
                 2 => {
@@ -105,31 +85,52 @@ fn game_setup_room(
                         .spawn(SpriteBundle {
                             material: destructable_wall_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
-                        .with(Wall)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        });
+                        .with(Wall);
                 }
                 // When setting each level, the player’s position should be set flexibly
                 3 => {
+                    // way
+                    commands.spawn((
+                        Way,
+                        Transform::from_translation(Vec3::new(
+                            TILE_WIDTH * col_index as f32,
+                            TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                            0.0,
+                        )),
+                    ));
+                    // player
                     commands
                         .spawn(SpriteBundle {
                             material: player_material.0.clone(),
                             sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                0.0,
+                            )),
                             ..Default::default()
                         })
                         .with(Player { is_moving: false })
                         .with(Direction::Right)
-                        .with(Position {
-                            x: col_index as i32,
-                            y: (room_map.len() - row_index - 1) as i32,
-                        })
-                        .with(Velocity::new(0.1));
+                        .with(Velocity(1.5));
                 }
-                _ => continue,
+                _ => {
+                    commands.spawn((
+                        Way,
+                        Transform::from_translation(Vec3::new(
+                            TILE_WIDTH * col_index as f32,
+                            TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                            0.0,
+                        )),
+                    ));
+                }
             }
         }
     }
@@ -142,18 +143,7 @@ fn game_setup_room(
 // const ROOM_WIDTH:u32 = TILE_WIDTH * 11;
 // const ROOM_HEIGHT:u32 = TILE_WIDTH * 11;
 
-fn position_translation(mut q: Query<(&Position, &mut Transform)>) {
-    for (pos, mut transform) in q.iter_mut() {
-        transform.translation = Vec3::new(
-            (TILE_WIDTH * pos.x) as f32,
-            (TILE_WIDTH * pos.y) as f32,
-            0.0,
-        );
-    }
-}
 struct Map {
-    height: i32,
-    width: i32,
     value: Vec<Vec<i32>>,
 }
 impl Map {
@@ -171,34 +161,11 @@ impl Map {
             vec![1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ];
-        Self {
-            height: 11,
-            width: 11,
-            value: room_map,
-        }
+        Self { value: room_map }
     }
 
     pub fn map_value(&self) -> &Vec<Vec<i32>> {
         &self.value
-    }
-    pub fn height(&self) -> i32 {
-        self.height
-    }
-    pub fn width(&self) -> i32 {
-        self.width
-    }
-    pub fn intersects(&self, x: i32, y: i32) -> bool {
-        // x: (col_index as u32) as i32,
-        // y: ((room_map.len() - row_index - 1) as u32) as i32,
-        let len = self.value.len();
-        if let Some(row) = self.value.get(len - y as usize - 1) {
-            if let Some(num) = row.get(x as usize) {
-                if *num == 0 || *num == 3 {
-                    return true;
-                }
-            }
-        }
-        false
     }
 }
 // ok
@@ -235,27 +202,117 @@ fn change_direction(
 }
 
 fn player_movement(
-    map_resource: Res<Map>,
-    time: Res<Time>,
-    mut query: Query<(&mut Velocity, &Player, &Direction, &mut Position), (Changed<Player>)>,
+    wall_position: Query<&Transform, (With<Wall>, Without<Player>)>,
+    mut request_repair_events: ResMut<Events<RequestRepairEvent>>,
+    fixed_move_event: Res<Events<FixedMoveEvent>>,
+    mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
+    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), (Changed<Player>)>,
 ) {
-    for (mut velocity, player, direction, mut position) in query.iter_mut() {
+    for (velocity, player, direction, mut player_transform) in query.iter_mut() {
         if player.is_moving {
-            let mut x = position.x;
-            let mut y = position.y;
+            let mut x = player_transform.translation.x;
+            let mut y = player_transform.translation.y;
 
             match direction {
-                Direction::Left => x -= 1,
-                Direction::Up => y += 1,
-                Direction::Right => x += 1,
-                Direction::Down => y -= 1,
+                Direction::Left => x -= velocity.0,
+                Direction::Up => y += velocity.0,
+                Direction::Right => x += velocity.0,
+                Direction::Down => y -= velocity.0,
             }
 
-            // println!("{:?}",map_resource.intersects(x, y));
-            // println!("{:?}", velocity.finished(time.delta_seconds()));
-            if map_resource.intersects(x, y) && velocity.finished(time.delta_seconds()) {
-                println!("here!");
-                position.set(x, y);
+            let mut intersects = true;
+            'for_loop: for transform in wall_position.iter() {
+                let one = transform.translation;
+
+                if aabb_detection(x, y, one) {
+                    request_repair_events
+                        .send(RequestRepairEvent(player_transform.translation, *direction));
+                    for position in fixed_move_event_reader.iter(&fixed_move_event) {
+                        match position {
+                            FixedMoveEvent::HaveWay(p) => {
+                                if aabb_detection(p.x, p.y, one) {
+                                    intersects = false;
+                                } else {
+                                    x = p.x;
+                                    y = p.y;
+                                }
+                            }
+                            _ => intersects = false,
+                        }
+                    }
+                    break 'for_loop;
+                }
+            }
+            if intersects {
+                player_transform.translation = Vec3::new(x, y, 0.0);
+            }
+        }
+    }
+}
+fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
+    one.x + TILE_WIDTH > x
+        && x + TILE_WIDTH > one.x
+        && one.y + TILE_WIDTH > y
+        && y + TILE_WIDTH > one.y
+}
+fn fix_player_translation(
+    direction: Direction,
+    translation: Vec3,
+    way_transform: Vec3,
+    threshold: f32,
+) -> Option<Vec3> {
+    match direction {
+        Direction::Left | Direction::Right => {
+            // fix up or down distance
+            // fix -> y value
+            let way_y = way_transform.y;
+            let y = translation.y;
+            if way_y - y < threshold {
+                Some(Vec3::new(translation.x, way_y, 0.0))
+            } else {
+                None
+            }
+        }
+        Direction::Up | Direction::Down => {
+            // fix left or right distance
+            // fix -> x value
+            let way_x = way_transform.x;
+            let x = translation.x;
+            if way_x - x < threshold {
+                Some(Vec3::new(way_x, translation.y, 0.0))
+            } else {
+                None
+            }
+        }
+    }
+}
+fn road_detection(
+    threshold: Res<Threshold>,
+    mut fixed_move_events: ResMut<Events<FixedMoveEvent>>,
+    mut request_repair_event_reader: Local<EventReader<RequestRepairEvent>>,
+    request_repair_events: Res<Events<RequestRepairEvent>>,
+    way_position: Query<&Transform, (With<Way>, Without<Wall>)>,
+) {
+    for RequestRepairEvent(position, dir) in
+        request_repair_event_reader.iter(&request_repair_events)
+    {
+        let x = position.x;
+        let y = position.y;
+
+        'for_loop: for transform in way_position.iter() {
+            let one = transform.translation;
+
+            let collision_x = one.x + TILE_WIDTH > x && x + TILE_WIDTH > one.x;
+            let collision_y = one.y + TILE_WIDTH > y && y + TILE_WIDTH > one.y;
+            if collision_x && collision_y {
+                if let Some(fixed_position) =
+                    fix_player_translation(*dir, *position, one, threshold.0)
+                {
+                    fixed_move_events.send(FixedMoveEvent::HaveWay(fixed_position));
+                } else {
+                    fixed_move_events.send(FixedMoveEvent::NoWay);
+                }
+                break 'for_loop;
             }
         }
     }
@@ -263,35 +320,28 @@ fn player_movement(
 
 const GMAE_SETUP: &str = "game_setup";
 const MOVEMENT: &str = "movement";
-
-struct Velocity {
-    timer: Timer,
+struct RequestRepairEvent(Vec3, Direction);
+enum FixedMoveEvent {
+    HaveWay(Vec3),
+    NoWay,
 }
-
-impl Velocity {
-    pub fn new(value: f32) -> Self {
-        let timer = Timer::from_seconds(value, true);
-        Self { timer }
-    }
-    pub fn set(&mut self, value: f32) {
-        self.timer.set_duration(value);
-    }
-    pub fn finished(&mut self,delta: f32) -> bool {
-        // TODO: here will be replaced by a better way
-        self.timer.tick(delta).just_finished()
-    }
-}
+struct Velocity(f32);
+struct Threshold(f32);
 
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
         .add_resource(Map::first())
+        // TODO: Strange Bugs are triggered when the threshold is below 20
+        .add_resource(Threshold(20.0))
+        .add_event::<FixedMoveEvent>()
+        .add_event::<RequestRepairEvent>()
         .add_startup_stage(GMAE_SETUP, SystemStage::parallel()) // <--
         .add_startup_system_to_stage(GMAE_SETUP, game_setup_room.system())
-        .add_stage(MOVEMENT, SystemStage::serial())
+        .add_stage(MOVEMENT, SystemStage::parallel())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
-        .add_system(position_translation.system())
+        .add_system_to_stage(MOVEMENT, road_detection.system())
         .run();
 }
