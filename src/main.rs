@@ -119,7 +119,7 @@ fn game_setup_room(
                         })
                         .with(Player { is_moving: false })
                         .with(Direction::Right)
-                        .with(Velocity(2.0));
+                        .with(Velocity(1.5));
                 }
                 _ => {
                     commands.spawn((
@@ -339,7 +339,7 @@ fn main() {
         .add_event::<RequestRepairEvent>()
         .add_startup_stage(GMAE_SETUP, SystemStage::parallel()) // <--
         .add_startup_system_to_stage(GMAE_SETUP, game_setup_room.system())
-        .add_stage(MOVEMENT, SystemStage::serial())
+        .add_stage(MOVEMENT, SystemStage::parallel())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
         .add_system_to_stage(MOVEMENT, road_detection.system())
