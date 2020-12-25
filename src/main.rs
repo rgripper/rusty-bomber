@@ -229,6 +229,7 @@ fn player_movement(
                     request_repair_events.send(RequestRepairEvent(
                         player_transform.translation,
                         *direction,
+                        one
                     ));
                     for position in fixed_move_event_reader.iter(&fixed_move_event) {
                         match position {
@@ -245,10 +246,7 @@ fn player_movement(
             }
 
             // println!("x: {},y: {}", x, y);
-            if intersects {
-                player_transform.translation = Vec3::new(x, y, 0.0);
-            }
-            if have_way {
+            if intersects || have_way{
                 player_transform.translation = Vec3::new(x, y, 0.0);
             }
         }
@@ -263,23 +261,39 @@ fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
 fn fix_player_translation(
     direction: Direction,
     translation: Vec3,
+    wall_translation:Vec3,
     way_translation: Vec3,
     threshold: f32,
 ) -> Option<Vec3> {
     match direction {
         Direction::Left | Direction::Right => {
+            if wall_translation.y == way_translation.y {
+                return None;
+            }
+            if way_translation.y == translation.y {
+                return None;
+            }
+
             // fix up or down distance
             // fix -> y value
             let way_y = way_translation.y;
             let y = translation.y;
             // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
+            
             if (way_y - y).abs() < threshold {
+                println!("way: {}",way_translation);
                 Some(Vec3::new(translation.x, way_y, 0.0))
-            } else {
+            }else {
                 None
             }
         }
         Direction::Up | Direction::Down => {
+            if wall_translation.x == way_translation.x {
+                return None;
+            }
+            if way_translation.x == translation.x {
+                return None;
+            }
             // fix left or right distance
             // fix -> x value
             let way_x = way_translation.x;
@@ -299,7 +313,7 @@ fn road_detection(
     request_repair_events: Res<Events<RequestRepairEvent>>,
     way_position: Query<&Transform, (With<Way>, Without<Wall>)>,
 ) {
-    for RequestRepairEvent(position, dir) in
+    for RequestRepairEvent(position, dir,wall_position) in
         request_repair_event_reader.iter(&request_repair_events)
     {
         let x = position.x;
@@ -312,7 +326,7 @@ fn road_detection(
             let collision_y = one.y + TILE_WIDTH > y && y + TILE_WIDTH > one.y;
             if collision_x && collision_y {
                 if let Some(fixed_position) =
-                    fix_player_translation(*dir, *position, one, threshold.0)
+                    fix_player_translation(*dir, *position, *wall_position,one, threshold.0)
                 {
                     fixed_move_events.send(FixedMoveEvent::HaveWay(fixed_position));
                 } else {
@@ -325,7 +339,7 @@ fn road_detection(
 
 const GMAE_SETUP: &str = "game_setup";
 const MOVEMENT: &str = "movement";
-struct RequestRepairEvent(Vec3, Direction);
+struct RequestRepairEvent(Vec3, Direction,Vec3);
 enum FixedMoveEvent {
     HaveWay(Vec3),
     NoWay,
