@@ -346,13 +346,13 @@ enum FixedMoveEvent {
 }
 struct Velocity(f32);
 struct Threshold(f32);
-
-fn is_point_in_the_tile(tile: Vec3, point: Vec3) -> bool {
-    point.x > tile.x
-        && point.y > tile.y
-        && point.x - tile.x < TILE_WIDTH
-        && point.y - tile.y < TILE_WIDTH
-}
+// May be useful
+// fn is_point_in_the_tile(tile: Vec3, point: Vec3) -> bool {
+//     point.x > tile.x
+//         && point.y > tile.y
+//         && point.x - tile.x < TILE_WIDTH
+//         && point.y - tile.y < TILE_WIDTH
+// }
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
