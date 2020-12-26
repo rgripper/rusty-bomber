@@ -114,9 +114,12 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Player { is_moving: false })
+                        .with(Player)
                         .with(Direction::Right)
-                        .with(Velocity(1.0))
+                        .with(Velocity {
+                            max: 1.0,
+                            current: 0.0,
+                        })
                         .with(Destructable);
                 }
                 _ => {

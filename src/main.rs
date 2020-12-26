@@ -5,10 +5,11 @@ pub struct Wall;
 pub struct Way;
 pub struct Destructable;
 pub struct MaxAndCurrent(i32, i32);
-pub struct Player {
-    is_moving: bool,
+pub struct Player;
+pub struct Velocity {
+    max: f32,
+    current: f32,
 }
-pub struct Velocity(f32);
 pub struct Creature;
 pub struct Bomb(Timer);
 pub struct BombPower(i32);
@@ -115,6 +116,6 @@ fn main() {
         .add_system_to_stage(MOVEMENT, road_detection.system())
         .add_system_to_stage(BOMB, space_to_set_bomb.system())
         .add_system_to_stage(BOMB, bomb_trigger.system())
-        .add_system_to_stage(BOMB,remove_fire.system())
+        .add_system_to_stage(BOMB, remove_fire.system())
         .run();
 }
