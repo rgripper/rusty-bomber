@@ -117,7 +117,7 @@ pub fn game_setup_room(
                         .with(Player { is_moving: false })
                         .with(Direction::Right)
                         .with(Velocity(1.0))
-                        .with(Destructable);
+                        .with(Life { before: 1, now: 1 });
                 }
                 _ => {
                     commands
