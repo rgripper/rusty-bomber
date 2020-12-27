@@ -8,7 +8,7 @@ pub fn player_movement(
     mut request_repair_events: ResMut<Events<RequestRepairEvent>>,
     fixed_move_event: Res<Events<FixedMoveEvent>>,
     mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
-    mut query: Query<(&Velocity, &Direction, &mut Transform), Changed<Player>>,
+    mut query: Query<(&Velocity, &Direction, &mut Transform)>,
 ) {
     for (velocity, direction, mut player_transform) in query.iter_mut() {
         if velocity.current == 0.0 {
