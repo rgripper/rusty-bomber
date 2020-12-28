@@ -11,62 +11,65 @@ pub fn player_movement(
     mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
     mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), Changed<Player>>,
 ) {
-    for (velocity, player, direction, mut player_transform) in query.iter_mut() {
-        if player.is_moving {
-            let mut x = player_transform.translation.x;
-            let mut y = player_transform.translation.y;
+    for (velocity, direction, mut player_transform) in query.iter_mut() {
+        if velocity.current == 0.0 {
+            continue;
+        }
 
-            match direction {
-                Direction::Left => x -= velocity.0,
-                Direction::Up => y += velocity.0,
-                Direction::Right => x += velocity.0,
-                Direction::Down => y -= velocity.0,
-            }
+        let mut x = player_transform.translation.x;
+        let mut y = player_transform.translation.y;
+        println!("speed is {}", velocity.current);
+        match direction {
+            Direction::Left => x -= velocity.current,
+            Direction::Up => y += velocity.current,
+            Direction::Right => x += velocity.current,
+            Direction::Down => y -= velocity.current,
+        }
 
-            let mut intersects = true;
-            let mut have_way = false;
-            for transform in wall_position.iter() {
-                let one = transform.translation;
+        let mut intersects = true;
+        let mut have_way = false;
+        for transform in wall_position.iter() {
+            let one = transform.translation;
 
-                if aabb_detection(x, y, one) {
-                    request_repair_events.send(RequestRepairEvent(
-                        player_transform.translation,
-                        *direction,
-                        one,
-                    ));
-                    for position in fixed_move_event_reader.iter(&fixed_move_event) {
-                        match position {
-                            FixedMoveEvent::HaveWay(p, is_x) => {
-                                have_way = true;
-                                if *is_x {
-                                    if x > p.x && x - velocity.0 >= p.x {
-                                        x -= velocity.0;
-                                    }
+            if aabb_detection(x, y, one) {
+                request_repair_events.send(RequestRepairEvent(
+                    player_transform.translation,
+                    *direction,
+                    one,
+                ));
+                for position in fixed_move_event_reader.iter(&fixed_move_event) {
+                    match position {
+                        FixedMoveEvent::HaveWay(p, is_x) => {
+                            have_way = true;
+                            if *is_x {
+                                if x > p.x && x - velocity.current >= p.x {
+                                    x -= velocity.current;
+                                }
 
-                                    if x < p.x && x + velocity.0 <= p.x {
-                                        x += velocity.0;
-                                    }
-                                } else {
-                                    if y < p.y && y + velocity.0 <= p.y {
-                                        y += velocity.0;
-                                    }
-                                    if y > p.y && y - velocity.0 >= p.y {
-                                        y -= velocity.0;
-                                    }
+                                if x < p.x && x + velocity.current <= p.x {
+                                    x += velocity.current;
+                                }
+                            } else {
+                                if y < p.y && y + velocity.current <= p.y {
+                                    y += velocity.current;
+                                }
+                                if y > p.y && y - velocity.current >= p.y {
+                                    y -= velocity.current;
                                 }
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
-                    intersects = false;
                 }
+                intersects = false;
             }
-
+        }
             // println!("x: {},y: {}", x, y);
             if intersects || have_way {
                 player_transform.translation.x = x;
                 player_transform.translation.y = y;
             }
+
         }
     }
 }
@@ -143,9 +146,9 @@ pub fn road_detection(
 }
 pub fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Player)>,
+    mut query: Query<(&mut Direction, &mut Velocity, &Player)>,
 ) {
-    for (mut direction, mut player) in query.iter_mut() {
+    for (mut direction, mut velocity, _player) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
             //println!("left");
             Some(Direction::Left)
@@ -164,11 +167,10 @@ pub fn change_direction(
         };
         if let Some(dir) = movement_action {
             *direction = dir;
-            player.is_moving = true;
-            //println!("moving!");
+            velocity.current = velocity.max;
+            println!("moving!");
         } else {
-            player.is_moving = false;
-            //println!("stop!");
+            velocity.current = 0.0;
         }
     }
 }

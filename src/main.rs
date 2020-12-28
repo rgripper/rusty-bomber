@@ -44,11 +44,12 @@ pub enum Destructable {
     BombNumberBuffBox,
 }
 pub struct MaxAndCurrent(i32, i32);
-pub struct Player {
-    is_moving: bool,
+pub struct Player;
+pub struct Velocity {
+    max: f32,
+    current: f32,
 }
 
-pub struct Velocity(f32);
 pub struct Creature;
 pub struct Bomb {
     timer: Timer,
