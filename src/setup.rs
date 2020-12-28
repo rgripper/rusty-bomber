@@ -26,6 +26,15 @@ pub fn setup(commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial
         ))
         .insert_resource(FireMaterial(
             materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
+        ))
+        .insert_resource(PowerBuffMaterial(
+            materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
+        ))
+        .insert_resource(SpeedBuffMaterial(
+            materials.add(Color::rgb(0.0, 1.0, 1.0).into()),
+        ))
+        .insert_resource(BombNumberBuffMaterial(
+            materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
         ));
 }
 
@@ -84,7 +93,7 @@ pub fn game_setup_room(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable);
+                        .with(Destructable::NormalBox);
                 }
                 // When setting each level, the player’s position should be set flexibly
                 3 => {
@@ -114,13 +123,7 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Player)
-                        .with(Direction::Right)
-                        .with(Velocity {
-                            max: 1.0,
-                            current: 0.0,
-                        })
-                        .with(Destructable);
+                        .with_bundle(PlayerBundle::default());
                 }
                 _ => {
                     commands
