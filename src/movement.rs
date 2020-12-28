@@ -4,11 +4,12 @@ use crate::*;
 pub const MOVEMENT: &str = "movement";
 
 pub fn player_movement(
+    // time:Res<Time>,
     wall_position: Query<&Transform, (With<Wall>, Without<Player>)>,
     mut request_repair_events: ResMut<Events<RequestRepairEvent>>,
     fixed_move_event: Res<Events<FixedMoveEvent>>,
     mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
-    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), (Changed<Player>)>,
+    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), Changed<Player>>,
 ) {
     for (velocity, player, direction, mut player_transform) in query.iter_mut() {
         if player.is_moving {
@@ -63,7 +64,8 @@ pub fn player_movement(
 
             // println!("x: {},y: {}", x, y);
             if intersects || have_way {
-                player_transform.translation = Vec3::new(x, y, 0.0);
+                player_transform.translation.x = x;
+                player_transform.translation.y = y;
             }
         }
     }

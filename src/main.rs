@@ -1,41 +1,70 @@
 pub use bevy::prelude::*;
+// Bundle
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    player: Player,
+    direction:Direction, 
+    velocity:Velocity,
+    destructable:Destructable,
+    bomb_power:BombPower,
+    bomb_number:BombNumber,
+}
 
+impl Default for PlayerBundle {
+    fn default() -> Self {
+        Self { 
+            player:Player { is_moving: false },
+            direction:Direction::Right,
+            velocity:Velocity(1.0),
+            destructable:Destructable::Player,
+            bomb_power:BombPower(1),
+            bomb_number:BombNumber {max:1,current:0}
+        }
+    }
+}
 // Component
 pub struct Wall;
 pub struct Way;
-pub struct Destructable;
+pub struct SpeedWay;
+
+pub enum Buff {
+    PowerBuff,
+    SpeedBuff,
+    BombNumberBuff,
+}
+pub enum GameMode {
+    SinglePlayer,
+    MultiPlayer,
+}
+pub enum Destructable {
+    Player,
+    NormalBox,
+    PowerBuffBox,
+    SpeedBuffBox,
+    BombNumberBuffBox,
+}
 pub struct MaxAndCurrent(i32, i32);
 pub struct Player {
     is_moving: bool,
 }
-pub struct Life {
-    before: i32,
-    now: i32,
-}
 
-impl Life {
-    pub fn update(&mut self, value: i32) {
-        self.before = self.now;
-        self.now += value;
-    }
-    pub fn state(&self) -> PlayerState {
-        match self.now.cmp(&self.before) {
-            std::cmp::Ordering::Less => PlayerState::DeBuff,
-            std::cmp::Ordering::Equal => PlayerState::Normal,
-            std::cmp::Ordering::Greater => PlayerState::Buff,
-        }
-    }
-}
-#[derive(PartialEq, Copy, Clone)]
-pub enum PlayerState {
-    Normal,
-    Buff,
-    DeBuff,
-}
 pub struct Velocity(f32);
 pub struct Creature;
-pub struct Bomb(Timer);
+pub struct Bomb {
+    timer: Timer,
+    player: Entity,
+}
+
 pub struct BombPower(i32);
+pub struct BombNumber {
+    max: i32,
+    current: i32,
+}
+impl BombNumber {
+    pub fn is_enough(&self) -> bool {
+        self.current < self.max
+    }
+}
 pub struct Fire(Timer);
 pub struct Dizziness(Timer, f32);
 #[derive(PartialEq, Copy, Clone)]
@@ -56,9 +85,10 @@ pub struct FloorMaterial(Handle<ColorMaterial>);
 pub struct PlayerMaterial(Handle<ColorMaterial>);
 pub struct BombMaterial(Handle<ColorMaterial>);
 pub struct CreatureMaterial(Handle<ColorMaterial>);
-
 pub struct FireMaterial(Handle<ColorMaterial>);
-
+pub struct PowerBuffMaterial(Handle<ColorMaterial>);
+pub struct SpeedBuffMaterial(Handle<ColorMaterial>);
+pub struct BombNumberBuffMaterial(Handle<ColorMaterial>);
 // Resource
 pub struct Map {
     value: Vec<Vec<i32>>,
@@ -89,7 +119,7 @@ impl Map {
 pub struct Threshold(f32);
 
 // Events
-pub struct HavePlayerWayEvent(Vec3, bool);
+pub struct HavePlayerWayEvent(Vec3);
 
 pub struct RequestRepairEvent(
     Vec3,      // position
@@ -105,8 +135,9 @@ pub struct SmoothMoveEvent(Vec3);
 
 pub struct ExistsEvent;
 pub struct PlantBombEvent(Vec3);
-pub struct RequestSpawnBoomEvent(Vec3);
-
+pub struct RequestSpawnBombEvent(Vec3);
+pub struct GameOverEvent(Entity);
+pub struct RecoveryBombNumberEvent(Entity);
 // Constant
 
 pub const PLAYER_LAYER: f32 = 2.0;
@@ -138,7 +169,8 @@ fn main() {
         .add_event::<HavePlayerWayEvent>()
         .add_event::<ExistsEvent>()
         .add_event::<PlantBombEvent>()
-        .add_event::<RequestSpawnBoomEvent>()
+        .add_event::<GameOverEvent>()
+        .add_event::<RecoveryBombNumberEvent>()
         .add_startup_stage(GMAE_SETUP, SystemStage::parallel())
         .add_stage(MOVEMENT, SystemStage::parallel())
         .add_stage_before(MOVEMENT, BASES, SystemStage::parallel()) // <--
@@ -152,11 +184,9 @@ fn main() {
         .add_system_to_stage(BOMB, space_to_set_bomb.system())
         .add_system_to_stage(BOMB, bomb_trigger.system())
         .add_system_to_stage(BOMB, despawn_fire.system())
-        .add_system_to_stage(BOMB, request_spawn_bomb.system())
         .add_system_to_stage(BOMB, bomb_block_player.system())
         .add_system_to_stage(BOMB, bomb_destruction.system())
-        .add_system_to_stage(BOMB, bomb_life_things.system())
-        .add_system_to_stage(BUFF, add_dizziness_buff.system())
-        .add_system_to_stage(BUFF, trigger_dizziness_buff.system())
+        .add_system_to_stage(BOMB, recovery_bomb_number.system())
+        .add_system_to_stage(BUFF, buffs.system())
         .run();
 }
