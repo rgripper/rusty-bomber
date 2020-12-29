@@ -4,21 +4,21 @@ use crate::*;
 pub const MOVEMENT: &str = "movement";
 
 pub fn player_movement(
-    mut query: Query<(&Velocity, &Direction, &mut Transform)>,
-    wall_pos_query: &Query<(&Wall, &Transform)>,
+    mut query: Query<(&Velocity, &Direction, &mut Transform),(With<Player>,Changed<Velocity>)>,
+    wall_pos_query: Query<&Transform,With<Wall>>,
 ) {
-    for (velocity, direction, mut unit_transform) in query
+    for (_, direction, mut unit_transform) in query
         .iter_mut()
         .filter(|(velocity, _, _)| velocity.current > 0.0)
     {
-        let maybe_new_pos = move_or_turn(&unit_transform.translation, direction, wall_pos_query);
-        for new_pos in maybe_new_pos {
+        if let Some(new_pos) = move_or_turn(&unit_transform.translation, direction, &wall_pos_query){
             unit_transform.translation = new_pos;
+            debug!(?new_pos);
         }
     }
 }
 
-pub fn fix_player_translation(
+fn fix_player_translation(
     direction: Direction,
     translation: Vec3,
     wall_translation: Vec3,
@@ -90,9 +90,9 @@ pub fn road_detection(
 }
 pub fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Velocity, &Player)>,
+    mut query: Query<(&mut Direction, &mut Velocity),With<Player>>,
 ) {
-    for (mut direction, mut velocity, _player) in query.iter_mut() {
+    for (mut direction, mut velocity) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
             //println!("left");
             Some(Direction::Left)
@@ -109,10 +109,10 @@ pub fn change_direction(
             //println!("none");
             None
         };
+
         if let Some(dir) = movement_action {
             *direction = dir;
             velocity.current = velocity.max;
-            println!("moving!");
         } else {
             velocity.current = 0.0;
         }
@@ -122,23 +122,23 @@ pub fn change_direction(
 fn move_or_turn(
     unit_pos: &Vec3,
     direction: &Direction,
-    wall_pos_query: &Query<(&Wall, &Transform)>,
+    wall_pos_query: &Query<&Transform,With<Wall>>,
 ) -> Option<Vec3> {
     let velocity_vec = get_velocity_vec(direction, 2.0);
-    // if is_same_cell(unit_pos, &velocity_vec) {
-    //     return None;
-    // }
+
 
     let threshold = 3.0;
 
     let new_unit_pos = *unit_pos + velocity_vec;
-    let maybe_wall = wall_pos_query.iter().find(|(_wall, wall_tranform)| {
+    // TODO:This doesn’t seem right
+    let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
         new_unit_pos.abs_diff_eq(wall_tranform.translation, TILE_WIDTH)
     });
-
+    debug!(?maybe_wall);
+    info!("{:?}",maybe_wall);
     match maybe_wall {
         None => Some(new_unit_pos),
-        Some((_, wall_transform)) => {
+        Some(wall_transform) => {
             let maybe_adjacent_cell_pos = get_adjacent_cell_entrance(
                 direction,
                 unit_pos,
@@ -146,7 +146,7 @@ fn move_or_turn(
                 threshold,
             )
             .map(|adjacent_cell_entrance| {
-                let has_adjacent_wall = wall_pos_query.iter().any(|(_wall, wall_tranform)| {
+                let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
                     adjacent_cell_entrance.abs_diff_eq(wall_tranform.translation, TILE_WIDTH)
                 });
                 if has_adjacent_wall {

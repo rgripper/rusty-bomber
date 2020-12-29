@@ -184,7 +184,7 @@ fn main() {
         .add_system_to_stage(BASES, have_player_way_position.system())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
-        .add_system_to_stage(MOVEMENT, road_detection.system())
+        //.add_system_to_stage(MOVEMENT, road_detection.system())
         .add_system_to_stage(BOMB, space_to_set_bomb.system())
         .add_system_to_stage(BOMB, bomb_trigger.system())
         .add_system_to_stage(BOMB, despawn_fire.system())
