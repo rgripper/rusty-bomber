@@ -135,7 +135,7 @@ fn move_or_turn(
     info!("{:?} {:?}", unit_pos, new_unit_pos);
     // TODO:This doesn’t seem right
     let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
-        new_unit_pos.abs_diff_eq(wall_tranform.translation.truncate(), TILE_WIDTH)
+        vecs_xy_intersect(new_unit_pos, wall_tranform.translation.truncate())
     });
 
     info!("{:?}", maybe_wall.is_some());
@@ -151,9 +151,9 @@ fn move_or_turn(
             )
             .map(|adjacent_cell_entrance| {
                 let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
-                    adjacent_cell_entrance
-                        .abs_diff_eq(wall_tranform.translation.truncate(), TILE_WIDTH)
+                    vecs_xy_intersect(adjacent_cell_entrance, wall_tranform.translation.truncate())
                 });
+
                 if has_adjacent_wall {
                     Some(adjacent_cell_entrance)
                 } else {
