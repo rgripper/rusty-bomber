@@ -9,3 +9,10 @@ pub fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
         && one.y + TILE_WIDTH > y
         && y + TILE_WIDTH > one.y
 }
+
+pub fn vecs_xy_intersect(first: Vec3, second: Vec3) -> bool {
+    first.x + TILE_WIDTH > second.x
+        && second.x + TILE_WIDTH > first.x
+        && first.y + TILE_WIDTH > second.y
+        && second.y + TILE_WIDTH > first.y
+}

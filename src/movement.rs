@@ -4,72 +4,16 @@ use crate::*;
 pub const MOVEMENT: &str = "movement";
 
 pub fn player_movement(
-    // time:Res<Time>,
-    wall_position: Query<&Transform, (With<Wall>, Without<Player>)>,
-    mut request_repair_events: ResMut<Events<RequestRepairEvent>>,
-    fixed_move_event: Res<Events<FixedMoveEvent>>,
-    mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
-    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), Changed<Player>>,
+    mut query: Query<(&Velocity, &Direction, &mut Transform)>,
+    wall_pos_query: &Query<(&Wall, &Transform)>,
 ) {
-    for (velocity, direction, mut player_transform) in query.iter_mut() {
-        if velocity.current == 0.0 {
-            continue;
-        }
-
-        let mut x = player_transform.translation.x;
-        let mut y = player_transform.translation.y;
-        println!("speed is {}", velocity.current);
-        match direction {
-            Direction::Left => x -= velocity.current,
-            Direction::Up => y += velocity.current,
-            Direction::Right => x += velocity.current,
-            Direction::Down => y -= velocity.current,
-        }
-
-        let mut intersects = true;
-        let mut have_way = false;
-        for transform in wall_position.iter() {
-            let one = transform.translation;
-
-            if aabb_detection(x, y, one) {
-                request_repair_events.send(RequestRepairEvent(
-                    player_transform.translation,
-                    *direction,
-                    one,
-                ));
-                for position in fixed_move_event_reader.iter(&fixed_move_event) {
-                    match position {
-                        FixedMoveEvent::HaveWay(p, is_x) => {
-                            have_way = true;
-                            if *is_x {
-                                if x > p.x && x - velocity.current >= p.x {
-                                    x -= velocity.current;
-                                }
-
-                                if x < p.x && x + velocity.current <= p.x {
-                                    x += velocity.current;
-                                }
-                            } else {
-                                if y < p.y && y + velocity.current <= p.y {
-                                    y += velocity.current;
-                                }
-                                if y > p.y && y - velocity.current >= p.y {
-                                    y -= velocity.current;
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                intersects = false;
-            }
-        }
-            // println!("x: {},y: {}", x, y);
-            if intersects || have_way {
-                player_transform.translation.x = x;
-                player_transform.translation.y = y;
-            }
-
+    for (velocity, direction, mut unit_transform) in query
+        .iter_mut()
+        .filter(|(velocity, _, _)| velocity.current > 0.0)
+    {
+        let maybe_new_pos = move_or_turn(&unit_transform.translation, direction, wall_pos_query);
+        for new_pos in maybe_new_pos {
+            unit_transform.translation = new_pos;
         }
     }
 }
@@ -172,5 +116,89 @@ pub fn change_direction(
         } else {
             velocity.current = 0.0;
         }
+    }
+}
+
+fn move_or_turn(
+    unit_pos: &Vec3,
+    direction: &Direction,
+    wall_pos_query: &Query<(&Wall, &Transform)>,
+) -> Option<Vec3> {
+    let velocity_vec = get_velocity_vec(direction, 2.0);
+    // if is_same_cell(unit_pos, &velocity_vec) {
+    //     return None;
+    // }
+
+    let threshold = 3.0;
+
+    let new_unit_pos = *unit_pos + velocity_vec;
+    let maybe_wall = wall_pos_query.iter().find(|(_wall, wall_tranform)| {
+        new_unit_pos.abs_diff_eq(wall_tranform.translation, TILE_WIDTH)
+    });
+
+    match maybe_wall {
+        None => Some(new_unit_pos),
+        Some((_, wall_transform)) => {
+            let maybe_adjacent_cell_pos = get_adjacent_cell_entrance(
+                direction,
+                unit_pos,
+                &wall_transform.translation,
+                threshold,
+            )
+            .map(|adjacent_cell_entrance| {
+                let has_adjacent_wall = wall_pos_query.iter().any(|(_wall, wall_tranform)| {
+                    adjacent_cell_entrance.abs_diff_eq(wall_tranform.translation, TILE_WIDTH)
+                });
+                if has_adjacent_wall {
+                    Some(adjacent_cell_entrance)
+                } else {
+                    None
+                }
+            })
+            .flatten();
+
+            maybe_adjacent_cell_pos
+        }
+    }
+}
+
+fn get_adjacent_cell_entrance(
+    direction: &Direction,
+    unit_pos: &Vec3,
+    wall_pos: &Vec3,
+    threshold: f32,
+) -> Option<Vec3> {
+    match direction {
+        Direction::Left | Direction::Right => {
+            let upper = wall_pos.y + TILE_WIDTH;
+            let lower = wall_pos.y - TILE_WIDTH;
+            if (upper - unit_pos.y) < threshold {
+                Some(Vec3::new(unit_pos.x, upper, 0.0))
+            } else if (unit_pos.y - lower) < threshold {
+                Some(Vec3::new(unit_pos.x, lower, 0.0))
+            } else {
+                None
+            }
+        }
+        Direction::Up | Direction::Down => {
+            let right = wall_pos.x + TILE_WIDTH;
+            let left = wall_pos.x - TILE_WIDTH;
+            if (right - unit_pos.x) < threshold {
+                Some(Vec3::new(right, unit_pos.y, 0.0))
+            } else if (unit_pos.x - left) < threshold {
+                Some(Vec3::new(left, unit_pos.y, 0.0))
+            } else {
+                None
+            }
+        }
+    }
+}
+
+fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec3 {
+    match direction {
+        Direction::Left => Vec3::new(-speed, 0.0, 0.0),
+        Direction::Up => Vec3::new(0.0, speed, 0.0),
+        Direction::Right => Vec3::new(speed, 0.0, 0.0),
+        Direction::Down => Vec3::new(0.0, -speed, 0.0),
     }
 }
