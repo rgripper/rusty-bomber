@@ -130,19 +130,15 @@ fn move_or_turn(
 ) -> Option<Vec2> {
     let velocity_vec = get_velocity_vec(direction, 2.0);
 
-    let threshold = 3.0;
+    let threshold = 5.0;
     let new_unit_pos = *unit_pos + velocity_vec;
-    info!("{:?} {:?}", unit_pos, new_unit_pos);
-    // TODO:This doesn’t seem right
     let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
         vecs_xy_intersect(new_unit_pos, wall_tranform.translation.truncate())
     });
 
-    info!("{:?}", maybe_wall.is_some());
     match maybe_wall {
         None => Some(new_unit_pos),
         Some(wall_transform) => {
-            info!("{:?}", wall_transform.translation.truncate());
             let maybe_adjacent_cell_pos = get_adjacent_cell_entrance(
                 direction,
                 unit_pos,
@@ -155,9 +151,9 @@ fn move_or_turn(
                 });
 
                 if has_adjacent_wall {
-                    Some(adjacent_cell_entrance)
-                } else {
                     None
+                } else {
+                    Some(adjacent_cell_entrance)
                 }
             })
             .flatten();
@@ -173,10 +169,11 @@ fn get_adjacent_cell_entrance(
     wall_pos: &Vec2,
     threshold: f32,
 ) -> Option<Vec2> {
-    match direction {
+    let maybe_entrance = match direction {
         Direction::Left | Direction::Right => {
             let upper = wall_pos.y + TILE_WIDTH;
             let lower = wall_pos.y - TILE_WIDTH;
+
             if (upper - unit_pos.y) < threshold {
                 Some(Vec2::new(unit_pos.x, upper))
             } else if (unit_pos.y - lower) < threshold {
@@ -196,7 +193,19 @@ fn get_adjacent_cell_entrance(
                 None
             }
         }
-    }
+    };
+
+    maybe_entrance.map(|entrance| {
+        let turn_boost = 2.0;
+        let turn_boost_vec = match direction {
+            Direction::Left => Vec2::new(-turn_boost, 0.0),
+            Direction::Right => Vec2::new(turn_boost, 0.0),
+            Direction::Up => Vec2::new(0.0, turn_boost),
+            Direction::Down => Vec2::new(0.0, -turn_boost),
+        };
+
+        entrance + turn_boost_vec
+    })
 }
 
 fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec2 {
