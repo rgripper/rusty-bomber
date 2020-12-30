@@ -3,22 +3,25 @@ pub use bevy::prelude::*;
 #[derive(Bundle)]
 pub struct PlayerBundle {
     player: Player,
-    direction:Direction, 
-    velocity:Velocity,
-    destructable:Destructable,
-    bomb_power:BombPower,
-    bomb_number:BombNumber,
+    direction: Direction,
+    velocity: Velocity,
+    destructable: Destructable,
+    bomb_power: BombPower,
+    bomb_number: BombNumber,
 }
 
 impl Default for PlayerBundle {
     fn default() -> Self {
-        Self { 
-            player:Player { is_moving: false },
-            direction:Direction::Right,
-            velocity:Velocity(1.0),
-            destructable:Destructable::Player,
-            bomb_power:BombPower(1),
-            bomb_number:BombNumber {max:1,current:0}
+        Self {
+            player: Player,
+            direction: Direction::Right,
+            velocity: Velocity {
+                current: 0.0,
+                max: 2.0,
+            },
+            destructable: Destructable::Player,
+            bomb_power: BombPower(1),
+            bomb_number: BombNumber { max: 1, current: 0 },
         }
     }
 }
@@ -181,7 +184,7 @@ fn main() {
         .add_system_to_stage(BASES, have_player_way_position.system())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
-        .add_system_to_stage(MOVEMENT, road_detection.system())
+        //.add_system_to_stage(MOVEMENT, road_detection.system())
         .add_system_to_stage(BOMB, space_to_set_bomb.system())
         .add_system_to_stage(BOMB, bomb_trigger.system())
         .add_system_to_stage(BOMB, despawn_fire.system())
