@@ -2,7 +2,7 @@ use assets::*;
 use bevy::prelude::*;
 use errors::error_handler;
 use events::{GameOverEvent, RecoveryBombNumberEvent};
-use player::jump_state;
+use state_jumper::jump_state;
 use resources::Map;
 use state::*;
 use ui::{ButtonMaterials, draw_blink_system};
@@ -16,12 +16,13 @@ pub mod constants;
 pub mod errors;
 pub mod events;
 pub mod movement;
-pub mod player;
+pub mod state_jumper;
 pub mod resources;
 pub mod setup_map;
 pub mod state;
 pub mod ui;
 pub mod utils;
+pub mod animate;
 
 fn main() {
     App::build()
@@ -42,7 +43,11 @@ fn setup(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
+    let player_texture_handle = asset_server.load("chars/sample_character_01.png");
+    let player_texture_atlas = TextureAtlas::from_grid(player_texture_handle, Vec2::new(16.0, 32.0), 4, 3);
+    let player_texture_atlas_handle = texture_atlases.add(player_texture_atlas);
     commands
         // cameras
         .spawn(Camera2dBundle::default())
@@ -56,8 +61,8 @@ fn setup(
         .insert_resource(FloorMaterial(
             materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
         ))
-        .insert_resource(PlayerMaterial(
-            materials.add(Color::rgb(0.7, 0.5, 1.0).into()),
+        .insert_resource(PlayerTextureAtlas(
+            player_texture_atlas_handle,
         ))
         .insert_resource(CreatureMaterial(
             materials.add(Color::rgb(1.0, 0.3, 0.5).into()),

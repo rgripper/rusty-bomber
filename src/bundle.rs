@@ -1,5 +1,5 @@
 use crate::components::*;
-use bevy::prelude::Bundle;
+use bevy::{core::Timer, prelude::Bundle};
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
@@ -9,6 +9,7 @@ pub struct PlayerBundle {
     destructable: Destructable,
     bomb_power: BombPower,
     bomb_number: BombNumber,
+    animation: Animation,
 }
 
 impl Default for PlayerBundle {
@@ -20,6 +21,7 @@ impl Default for PlayerBundle {
             destructable: Destructable::Player,
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
+            animation: Animation(Timer::from_seconds(1.0, true)),
         }
     }
 }

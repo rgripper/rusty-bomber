@@ -1,12 +1,4 @@
-use crate::{
-    assets::*,
-    bundle::PlayerBundle,
-    components::{Destructable, InGame, Wall, Way},
-    constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
-    resources::Map,
-    state::RunState,
-    utils::TILE_WIDTH,
-};
+use crate::{assets::*, bundle::PlayerBundle, components::{Destructable, InGame, Wall, Way}, constants::{FIXED_DISTANCE, FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER}, resources::Map, state::RunState, utils::TILE_WIDTH};
 use bevy::prelude::*;
 
 pub const GMAE_SETUP: &str = "game_setup";
@@ -16,7 +8,7 @@ pub fn setup_map(
     perma_wall_material: Res<PermaWallMaterial>,
     map_resource: Res<Map>,
     destructable_wall_material: Res<DestructableWallMaterial>,
-    player_material: Res<PlayerMaterial>,
+    player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_material: Res<FloorMaterial>,
     mut runstate: ResMut<RunState>,
 ) {
@@ -90,12 +82,11 @@ pub fn setup_map(
 
                     // player
                     let player = commands
-                        .spawn(SpriteBundle {
-                            material: player_material.0.clone(),
-                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                        .spawn(SpriteSheetBundle {
+                            texture_atlas:player_texture_atlas.0.clone(),
                             transform: Transform::from_translation(Vec3::new(
                                 TILE_WIDTH * col_index as f32,
-                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32 + FIXED_DISTANCE,
                                 PLAYER_LAYER,
                             )),
                             ..Default::default()

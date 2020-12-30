@@ -1,7 +1,4 @@
-use crate::{
-    components::{Direction, Player, Velocity, Wall},
-    utils::{aabb_detection, get_way_translation},
-};
+use crate::{components::{Direction, Player, Velocity, Wall}, constants::FIXED_DISTANCE, utils::{aabb_detection, get_way_translation}};
 use bevy::prelude::*;
 
 pub const MOVEMENT: &str = "movement";
@@ -24,7 +21,7 @@ fn player_movement(
         if player.is_moving {
             let player_position = player_transform.translation;
             let mut x = player_position.x;
-            let mut y = player_position.y;
+            let mut y = player_position.y - FIXED_DISTANCE;
             let distance = velocity.0;
 
             match direction {
@@ -56,7 +53,7 @@ fn player_movement(
                                 } else if x < value && x + distance <= value {
                                     x += distance;
                                 }
-                                y = player_position.y;
+                                y = player_position.y - FIXED_DISTANCE;
                             } else {
                                 if y < value && y + distance <= value {
                                     y += distance;
@@ -79,7 +76,7 @@ fn player_movement(
                                 } else if x < value && x + distance <= value {
                                     x += distance;
                                 }
-                                y = player_position.y;
+                                y = player_position.y - FIXED_DISTANCE;
                             } else {
                                 if y < value && y + distance <= value {
                                     y += distance;
@@ -97,7 +94,7 @@ fn player_movement(
 
             if intersects || have_way {
                 player_transform.translation.x = x;
-                player_transform.translation.y = y;
+                player_transform.translation.y = y + FIXED_DISTANCE;
             }
         }
     }
@@ -116,14 +113,14 @@ pub fn fix_player_translation(
             if wall_translation.y == way_translation.y {
                 return None;
             }
-            if way_translation.y == translation.y {
+            if way_translation.y == translation.y- FIXED_DISTANCE{
                 return None;
             }
 
             // fix up or down distance
             // fix -> y value
             let way_y = way_translation.y;
-            let y = translation.y;
+            let y = translation.y - FIXED_DISTANCE;
             // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
 
             if (way_y - y).abs() < threshold {

@@ -1,14 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    bomb::BombSystems,
-    buff::BuffSystems,
-    components::InGame,
-    events::GameOverEvent,
-    movement::MovementSystems,
-    setup_map::setup_map,
-    ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
-};
+use crate::{animate::AnimateSystems, bomb::BombSystems, buff::BuffSystems, components::InGame, events::GameOverEvent, movement::MovementSystems, setup_map::setup_map, ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy}};
 
 #[derive(Clone, PartialEq)]
 pub enum AppState {
@@ -40,6 +32,7 @@ impl Plugin for AppStatePluge {
                             .movement_systems()
                             .bomb_systems()
                             .buff_systems()
+                            .animate_systems()
                             .add_system(game_over_events.system())
                     })
                     .on_state_exit(AppState::Game, exit_game_despawn.system())

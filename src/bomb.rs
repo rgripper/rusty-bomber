@@ -1,15 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{
-    assets::{
+use crate::{assets::{
         BombMaterial, BombNumberBuffMaterial, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial,
-    },
-    components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall},
-    constants::OBJECT_LAYER,
-    events::{GameOverEvent, RecoveryBombNumberEvent},
-    state::RunState,
-    utils::{aabb_detection, TILE_WIDTH},
-};
+    }, components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall}, constants::{FIXED_DISTANCE, OBJECT_LAYER}, events::{GameOverEvent, RecoveryBombNumberEvent}, state::RunState, utils::{aabb_detection, TILE_WIDTH}};
 
 pub const BOMB: &str = "bomb";
 pub trait BombSystems {
@@ -48,7 +41,7 @@ fn space_to_set_bomb(
                     }
                 }
                 let number_x = position.x / TILE_WIDTH;
-                let number_y = position.y / TILE_WIDTH;
+                let number_y = (position.y - FIXED_DISTANCE)/ TILE_WIDTH;
                 let one = Vec3::new(handle(number_x), handle(number_y), OBJECT_LAYER);
 
                 let mut is_not_exist = true;
@@ -242,7 +235,7 @@ fn bomb_block_player(
     for (entity, bomb_position) in bomb_query.iter() {
         for player_position in player_query.iter() {
             let x = player_position.translation.x;
-            let y = player_position.translation.y;
+            let y = player_position.translation.y - FIXED_DISTANCE;
             if !aabb_detection(x, y, bomb_position.translation) {
                 commands.insert_one(entity, Wall);
             }
