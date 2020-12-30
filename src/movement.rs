@@ -1,86 +1,116 @@
-use crate::Direction;
-use crate::*;
+use crate::{
+    components::{Direction, Player, Velocity, Wall},
+    utils::{aabb_detection, get_way_translation},
+};
+use bevy::prelude::*;
 
 pub const MOVEMENT: &str = "movement";
 
-pub fn player_movement(
-    // time:Res<Time>,
+pub trait MovementSystems {
+    fn movement_systems(&mut self) -> &mut Self;
+}
+impl MovementSystems for SystemStage {
+    fn movement_systems(&mut self) -> &mut Self {
+        self.add_system(player_movement.system())
+            .add_system(change_direction.system())
+    }
+}
+
+fn player_movement(
     wall_position: Query<&Transform, (With<Wall>, Without<Player>)>,
-    mut request_repair_events: ResMut<Events<RequestRepairEvent>>,
-    fixed_move_event: Res<Events<FixedMoveEvent>>,
-    mut fixed_move_event_reader: Local<EventReader<FixedMoveEvent>>,
-    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform), Changed<Player>>,
+    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform)>,
 ) {
-    for (velocity, direction, mut player_transform) in query.iter_mut() {
-        if velocity.current == 0.0 {
-            continue;
-        }
+    for (velocity, player, direction, mut player_transform) in query.iter_mut() {
+        if player.is_moving {
+            let player_position = player_transform.translation;
+            let mut x = player_position.x;
+            let mut y = player_position.y;
+            let distance = velocity.0;
 
-        let mut x = player_transform.translation.x;
-        let mut y = player_transform.translation.y;
-        println!("speed is {}", velocity.current);
-        match direction {
-            Direction::Left => x -= velocity.current,
-            Direction::Up => y += velocity.current,
-            Direction::Right => x += velocity.current,
-            Direction::Down => y -= velocity.current,
-        }
+            match direction {
+                Direction::Left => x -= distance,
+                Direction::Up => y += distance,
+                Direction::Right => x += distance,
+                Direction::Down => y -= distance,
+            }
 
-        let mut intersects = true;
-        let mut have_way = false;
-        for transform in wall_position.iter() {
-            let one = transform.translation;
+            let mut intersects = true;
+            let mut have_way = false;
+            for transform in wall_position.iter() {
+                let wall_position = transform.translation;
 
-            if aabb_detection(x, y, one) {
-                request_repair_events.send(RequestRepairEvent(
-                    player_transform.translation,
-                    *direction,
-                    one,
-                ));
-                for position in fixed_move_event_reader.iter(&fixed_move_event) {
-                    match position {
-                        FixedMoveEvent::HaveWay(p, is_x) => {
+                if aabb_detection(x, y, wall_position) {
+                    if let Some((one, two)) = get_way_translation(player_position.truncate()) {
+                        //info!("way:{}, one: {}, two: {}", wall_position, one, two);
+                        if let Some((value, is_x)) = fix_player_translation(
+                            direction,
+                            player_position,
+                            wall_position,
+                            one,
+                            12.0,
+                        ) {
                             have_way = true;
-                            if *is_x {
-                                if x > p.x && x - velocity.current >= p.x {
-                                    x -= velocity.current;
+                            if is_x {
+                                if x > value && x - distance >= value {
+                                    x -= distance;
+                                } else if x < value && x + distance <= value {
+                                    x += distance;
                                 }
-
-                                if x < p.x && x + velocity.current <= p.x {
-                                    x += velocity.current;
-                                }
+                                y = player_position.y;
                             } else {
-                                if y < p.y && y + velocity.current <= p.y {
-                                    y += velocity.current;
+                                if y < value && y + distance <= value {
+                                    y += distance;
+                                } else if y > value && y - distance >= value {
+                                    y -= distance;
                                 }
-                                if y > p.y && y - velocity.current >= p.y {
-                                    y -= velocity.current;
+                                x = player_position.x;
+                            }
+                        } else if let Some((value, is_x)) = fix_player_translation(
+                            direction,
+                            player_position,
+                            wall_position,
+                            two,
+                            12.0,
+                        ) {
+                            have_way = true;
+                            if is_x {
+                                if x > value && x - distance >= value {
+                                    x -= distance;
+                                } else if x < value && x + distance <= value {
+                                    x += distance;
                                 }
+                                y = player_position.y;
+                            } else {
+                                if y < value && y + distance <= value {
+                                    y += distance;
+                                } else if y > value && y - distance >= value {
+                                    y -= distance;
+                                }
+                                x = player_position.x;
                             }
                         }
-                        _ => {}
                     }
+
+                    intersects = false;
                 }
-                intersects = false;
             }
-        }
-            // println!("x: {},y: {}", x, y);
+
             if intersects || have_way {
                 player_transform.translation.x = x;
                 player_transform.translation.y = y;
             }
-
         }
     }
 }
 
+#[inline]
 pub fn fix_player_translation(
-    direction: Direction,
+    direction: &Direction,
     translation: Vec3,
     wall_translation: Vec3,
     way_translation: Vec3,
     threshold: f32,
-) -> Option<(Vec3, bool)> {
+) -> Option<(f32, bool)> {
     match direction {
         Direction::Left | Direction::Right => {
             if wall_translation.y == way_translation.y {
@@ -97,16 +127,18 @@ pub fn fix_player_translation(
             // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
 
             if (way_y - y).abs() < threshold {
-                Some((Vec3::new(translation.x, way_y, 0.0), false))
+                Some((way_y, false))
             } else {
                 None
             }
         }
         Direction::Up | Direction::Down => {
             if wall_translation.x == way_translation.x {
+                //info!("None1");
                 return None;
             }
             if way_translation.x == translation.x {
+                //info!("None2");
                 return None;
             }
             // fix left or right distance
@@ -114,63 +146,36 @@ pub fn fix_player_translation(
             let way_x = way_translation.x;
             let x = translation.x;
             if (way_x - x).abs() < threshold {
-                Some((Vec3::new(way_x, translation.y, 0.0), true))
+                //info!("here! x:{}", way_x);
+                Some((way_x, true))
             } else {
                 None
             }
         }
     }
 }
-pub fn road_detection(
-    threshold: Res<Threshold>,
-    mut fixed_move_events: ResMut<Events<FixedMoveEvent>>,
-    mut request_repair_event_reader: Local<EventReader<RequestRepairEvent>>,
-    request_repair_events: Res<Events<RequestRepairEvent>>,
-    mut have_player_way_position_reader: Local<EventReader<HavePlayerWayEvent>>,
-    have_player_way_position: Res<Events<HavePlayerWayEvent>>,
-) {
-    for RequestRepairEvent(position, dir, wall_position) in
-        request_repair_event_reader.iter(&request_repair_events)
-    {
-        for transform in have_player_way_position_reader.iter(&have_player_way_position) {
-            let one = transform.0;
-            if let Some((fixed_position, is_x)) =
-                fix_player_translation(*dir, *position, *wall_position, one, threshold.0)
-            {
-                fixed_move_events.send(FixedMoveEvent::HaveWay(fixed_position, is_x));
-            } else {
-                fixed_move_events.send(FixedMoveEvent::NoWay);
-            }
-        }
-    }
-}
-pub fn change_direction(
+
+fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Velocity, &Player)>,
+    mut query: Query<(&mut Direction, &mut Player)>,
 ) {
-    for (mut direction, mut velocity, _player) in query.iter_mut() {
+    for (mut direction, mut player) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
-            //println!("left");
             Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
-            // println!("down");
             Some(Direction::Down)
         } else if keyboard_input.pressed(KeyCode::Up) {
-            //println!("up");
             Some(Direction::Up)
         } else if keyboard_input.pressed(KeyCode::Right) {
-            //println!("right");
             Some(Direction::Right)
         } else {
-            //println!("none");
             None
         };
         if let Some(dir) = movement_action {
             *direction = dir;
-            velocity.current = velocity.max;
-            println!("moving!");
+            player.is_moving = true;
         } else {
-            velocity.current = 0.0;
+            player.is_moving = false;
         }
     }
 }
