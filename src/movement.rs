@@ -69,29 +69,7 @@ fn fix_player_translation(
         }
     }
 }
-pub fn road_detection(
-    threshold: Res<Threshold>,
-    mut fixed_move_events: ResMut<Events<FixedMoveEvent>>,
-    mut request_repair_event_reader: Local<EventReader<RequestRepairEvent>>,
-    request_repair_events: Res<Events<RequestRepairEvent>>,
-    mut have_player_way_position_reader: Local<EventReader<HavePlayerWayEvent>>,
-    have_player_way_position: Res<Events<HavePlayerWayEvent>>,
-) {
-    for RequestRepairEvent(position, dir, wall_position) in
-        request_repair_event_reader.iter(&request_repair_events)
-    {
-        for transform in have_player_way_position_reader.iter(&have_player_way_position) {
-            let one = transform.0;
-            if let Some((fixed_position, is_x)) =
-                fix_player_translation(*dir, *position, *wall_position, one, threshold.0)
-            {
-                fixed_move_events.send(FixedMoveEvent::HaveWay(fixed_position, is_x));
-            } else {
-                fixed_move_events.send(FixedMoveEvent::NoWay);
-            }
-        }
-    }
-}
+
 pub fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Direction, &mut Velocity), With<Player>>,
@@ -126,11 +104,10 @@ pub fn change_direction(
 fn move_or_turn(
     unit_pos: &Vec2,
     direction: &Direction,
-    wall_pos_query: &Query<&Transform, With<Wall>>,
+    wall_pos_query: &Query<&Transform, With<Wall>>, // TODO: doesnt match destructible walls for some reaon
 ) -> Option<Vec2> {
     let velocity_vec = get_velocity_vec(direction, 2.0);
 
-    let threshold = 5.0;
     let new_unit_pos = *unit_pos + velocity_vec;
     let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
         vecs_xy_intersect(new_unit_pos, wall_tranform.translation.truncate())
@@ -139,26 +116,21 @@ fn move_or_turn(
     match maybe_wall {
         None => Some(new_unit_pos),
         Some(wall_transform) => {
-            let maybe_adjacent_cell_pos = get_adjacent_cell_entrance(
+            let (adjacent_cell_pos, adjacent_cell_direction) = get_adjacent_cell_entrance(
                 direction,
                 unit_pos,
                 &wall_transform.translation.truncate(),
-                threshold,
-            )
-            .map(|adjacent_cell_entrance| {
-                let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
-                    vecs_xy_intersect(adjacent_cell_entrance, wall_tranform.translation.truncate())
-                });
+            );
 
-                if has_adjacent_wall {
-                    None
-                } else {
-                    Some(adjacent_cell_entrance)
-                }
-            })
-            .flatten();
+            let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
+                vecs_xy_intersect(adjacent_cell_pos, wall_tranform.translation.truncate())
+            });
 
-            maybe_adjacent_cell_pos
+            if has_adjacent_wall {
+                None
+            } else {
+                Some(*unit_pos + get_velocity_vec(&adjacent_cell_direction, 2.0))
+            }
         }
     }
 }
@@ -167,45 +139,28 @@ fn get_adjacent_cell_entrance(
     direction: &Direction,
     unit_pos: &Vec2,
     wall_pos: &Vec2,
-    threshold: f32,
-) -> Option<Vec2> {
-    let maybe_entrance = match direction {
+) -> (Vec2, Direction) {
+    match direction {
         Direction::Left | Direction::Right => {
             let upper = wall_pos.y + TILE_WIDTH;
             let lower = wall_pos.y - TILE_WIDTH;
 
-            if (upper - unit_pos.y) < threshold {
-                Some(Vec2::new(unit_pos.x, upper))
-            } else if (unit_pos.y - lower) < threshold {
-                Some(Vec2::new(unit_pos.x, lower))
+            if (upper - unit_pos.y) < (unit_pos.y - lower) {
+                (Vec2::new(unit_pos.x, upper), Direction::Up)
             } else {
-                None
+                (Vec2::new(unit_pos.x, lower), Direction::Down)
             }
         }
         Direction::Up | Direction::Down => {
             let right = wall_pos.x + TILE_WIDTH;
             let left = wall_pos.x - TILE_WIDTH;
-            if (right - unit_pos.x) < threshold {
-                Some(Vec2::new(right, unit_pos.y))
-            } else if (unit_pos.x - left) < threshold {
-                Some(Vec2::new(left, unit_pos.y))
+            if (right - unit_pos.x) < (unit_pos.x - left) {
+                (Vec2::new(right, unit_pos.y), Direction::Right)
             } else {
-                None
+                (Vec2::new(left, unit_pos.y), Direction::Left)
             }
         }
-    };
-
-    maybe_entrance.map(|entrance| {
-        let turn_boost = 2.0;
-        let turn_boost_vec = match direction {
-            Direction::Left => Vec2::new(-turn_boost, 0.0),
-            Direction::Right => Vec2::new(turn_boost, 0.0),
-            Direction::Up => Vec2::new(0.0, turn_boost),
-            Direction::Down => Vec2::new(0.0, -turn_boost),
-        };
-
-        entrance + turn_boost_vec
-    })
+    }
 }
 
 fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec2 {

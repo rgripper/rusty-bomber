@@ -125,12 +125,6 @@ pub struct Threshold(f32);
 // Events
 pub struct HavePlayerWayEvent(Vec3);
 
-pub struct RequestRepairEvent(
-    Vec3,      // position
-    Direction, // direction
-    Vec3,      // wall_position
-);
-
 pub enum FixedMoveEvent {
     HaveWay(Vec3, bool),
     NoWay,
@@ -169,7 +163,6 @@ fn main() {
         .add_resource(Map::first())
         .add_resource(Threshold(12.0))
         .add_event::<FixedMoveEvent>()
-        .add_event::<RequestRepairEvent>()
         .add_event::<HavePlayerWayEvent>()
         .add_event::<ExistsEvent>()
         .add_event::<PlantBombEvent>()
@@ -184,7 +177,6 @@ fn main() {
         .add_system_to_stage(BASES, have_player_way_position.system())
         .add_system_to_stage(MOVEMENT, change_direction.system())
         .add_system_to_stage(MOVEMENT, player_movement.system())
-        //.add_system_to_stage(MOVEMENT, road_detection.system())
         .add_system_to_stage(BOMB, space_to_set_bomb.system())
         .add_system_to_stage(BOMB, bomb_trigger.system())
         .add_system_to_stage(BOMB, despawn_fire.system())

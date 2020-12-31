@@ -1,4 +1,3 @@
-use crate::Direction;
 use crate::*;
 
 pub const GMAE_SETUP: &str = "game_setup";
