@@ -1,3 +1,4 @@
+
 use assets::*;
 use bevy::prelude::*;
 use errors::error_handler;
@@ -8,6 +9,7 @@ use state::*;
 use ui::{ButtonMaterials, draw_blink_system};
 
 pub mod assets;
+
 pub mod bomb;
 pub mod buff;
 pub mod bundle;
@@ -30,12 +32,14 @@ fn main() {
         .add_resource(Map::first())
         .init_resource::<ButtonMaterials>()
         .add_event::<RecoveryBombNumberEvent>()
+
         .add_event::<GameOverEvent>()
         .add_plugin(AppStatePluge)
         .add_plugin(GameStatePlugin)
         .add_startup_system(setup.system())
         .add_system(draw_blink_system.system())
         .add_system(jump_state.system().chain(error_handler.system()))
+
         .run();
 }
 
