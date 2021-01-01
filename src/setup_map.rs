@@ -1,8 +1,8 @@
 use crate::{
     assets::*,
     bundle::PlayerBundle,
-    components::{Destructable, InGame, Wall, Way},
-    constants::{FIXED_DISTANCE, FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
+    components::{Destructable, InGame, PlayerPosition, Wall, Way},
+    constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
     resources::Map,
     state::RunState,
     utils::TILE_WIDTH,
@@ -92,15 +92,14 @@ pub fn setup_map(
                     let player = commands
                         .spawn(SpriteSheetBundle {
                             texture_atlas: player_texture_atlas.0.clone(),
-                            transform: Transform::from_translation(Vec3::new(
-                                TILE_WIDTH * col_index as f32,
-                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32
-                                    + FIXED_DISTANCE,
-                                PLAYER_LAYER,
-                            )),
                             ..Default::default()
                         })
                         .with_bundle(PlayerBundle::default())
+                        .with(PlayerPosition::from(Vec3::new(
+                            TILE_WIDTH * col_index as f32,
+                            TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                            PLAYER_LAYER,
+                        )))
                         .with(InGame)
                         .current_entity();
                     runstate.player = player;

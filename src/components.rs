@@ -1,4 +1,9 @@
-use bevy::prelude::{Entity, Timer};
+use bevy::{
+    math::{Vec2, Vec3},
+    prelude::{Entity, Timer},
+};
+
+use crate::constants::PLAYER_LAYER;
 
 pub struct Wall;
 pub struct Way;
@@ -22,10 +27,11 @@ pub enum Destructable {
     BombNumberBuffBox,
 }
 pub struct MaxAndCurrent(i32, i32);
-pub struct Player {
-    pub is_moving: bool,
+pub struct Player;
+pub struct Velocity {
+    pub max: f32,
+    pub current: f32,
 }
-pub struct Velocity(pub f32);
 
 pub struct Creature;
 
@@ -71,5 +77,17 @@ impl From<Direction> for PlayerAnimation {
             Direction::Right => PlayerAnimation::new([3, 7, 11]),
             Direction::Down => PlayerAnimation::new([1, 5, 9]),
         }
+    }
+}
+pub struct PlayerPosition(pub Vec3);
+
+impl From<Vec3> for PlayerPosition {
+    fn from(v: Vec3) -> Self {
+        PlayerPosition(v)
+    }
+}
+impl From<Vec2> for PlayerPosition {
+    fn from(v: Vec2) -> Self {
+        PlayerPosition(v.extend(PLAYER_LAYER))
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
-    components::{Direction, Player, Velocity, Wall},
-    constants::FIXED_DISTANCE,
-    utils::{aabb_detection, get_way_translation},
+    components::{Direction, Player, PlayerPosition, Velocity, Wall},
+    constants::{FIXED_DISTANCE, PLAYER_LAYER},
+    utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 use bevy::prelude::*;
 
@@ -14,171 +14,132 @@ impl MovementSystems for SystemStage {
     fn movement_systems(&mut self) -> &mut Self {
         self.add_system(player_movement.system())
             .add_system(change_direction.system())
+            .add_system(position_to_translation.system())
     }
 }
-
-fn player_movement(
-    wall_position: Query<&Transform, (With<Wall>, Without<Player>)>,
-    mut query: Query<(&Velocity, &Player, &Direction, &mut Transform)>,
+fn position_to_translation(
+    mut query: Query<(&PlayerPosition, &mut Transform), Changed<PlayerPosition>>,
 ) {
-    for (velocity, player, direction, mut player_transform) in query.iter_mut() {
-        if player.is_moving {
-            let player_position = player_transform.translation;
-            let mut x = player_position.x;
-            let mut y = player_position.y - FIXED_DISTANCE;
-            let distance = velocity.0;
-
-            match direction {
-                Direction::Left => x -= distance,
-                Direction::Up => y += distance,
-                Direction::Right => x += distance,
-                Direction::Down => y -= distance,
-            }
-
-            let mut intersects = true;
-            let mut have_way = false;
-            for transform in wall_position.iter() {
-                let wall_position = transform.translation;
-
-                if aabb_detection(x, y, wall_position) {
-                    if let Some((one, two)) = get_way_translation(player_position.truncate()) {
-                        //info!("way:{}, one: {}, two: {}", wall_position, one, two);
-                        if let Some((value, is_x)) = fix_player_translation(
-                            direction,
-                            player_position,
-                            wall_position,
-                            one,
-                            12.0,
-                        ) {
-                            have_way = true;
-                            if is_x {
-                                if x > value && x - distance >= value {
-                                    x -= distance;
-                                } else if x < value && x + distance <= value {
-                                    x += distance;
-                                }
-                                y = player_position.y - FIXED_DISTANCE;
-                            } else {
-                                if y < value && y + distance <= value {
-                                    y += distance;
-                                } else if y > value && y - distance >= value {
-                                    y -= distance;
-                                }
-                                x = player_position.x;
-                            }
-                        } else if let Some((value, is_x)) = fix_player_translation(
-                            direction,
-                            player_position,
-                            wall_position,
-                            two,
-                            12.0,
-                        ) {
-                            have_way = true;
-                            if is_x {
-                                if x > value && x - distance >= value {
-                                    x -= distance;
-                                } else if x < value && x + distance <= value {
-                                    x += distance;
-                                }
-                                y = player_position.y - FIXED_DISTANCE;
-                            } else {
-                                if y < value && y + distance <= value {
-                                    y += distance;
-                                } else if y > value && y - distance >= value {
-                                    y -= distance;
-                                }
-                                x = player_position.x;
-                            }
-                        }
-                    }
-
-                    intersects = false;
-                }
-            }
-
-            if intersects || have_way {
-                player_transform.translation.x = (x).floor();
-                player_transform.translation.y = (y + FIXED_DISTANCE).floor();
-            }
+    for (position, mut transform) in query.iter_mut() {
+        let position = position.0;
+        transform.translation = Vec3::new(position.x, position.y + FIXED_DISTANCE, position.z);
+    }
+}
+pub fn player_movement(
+    mut query: Query<(&Velocity, &Direction, &mut PlayerPosition), With<Player>>,
+    wall_pos_query: Query<&Transform, With<Wall>>,
+) {
+    for (_, direction, mut player_position) in query
+        .iter_mut()
+        .filter(|(velocity, _, _)| velocity.current > 0.0)
+    {
+        if let Some(new_pos) =
+            move_or_turn(&player_position.0.truncate(), direction, &wall_pos_query)
+        {
+            player_position.0 = new_pos.extend(PLAYER_LAYER);
+            // conversion from Vec2 to Vec3
         }
     }
 }
 
-#[inline]
-pub fn fix_player_translation(
-    direction: &Direction,
-    translation: Vec3,
-    wall_translation: Vec3,
-    way_translation: Vec3,
-    threshold: f32,
-) -> Option<(f32, bool)> {
-    match direction {
-        Direction::Left | Direction::Right => {
-            if wall_translation.y == way_translation.y {
-                return None;
-            }
-            if way_translation.y == translation.y - FIXED_DISTANCE {
-                return None;
-            }
-
-            // fix up or down distance
-            // fix -> y value
-            let way_y = way_translation.y;
-            let y = translation.y - FIXED_DISTANCE;
-            // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
-
-            if (way_y - y).abs() < threshold {
-                Some((way_y, false))
-            } else {
-                None
-            }
-        }
-        Direction::Up | Direction::Down => {
-            if wall_translation.x == way_translation.x {
-                //info!("None1");
-                return None;
-            }
-            if way_translation.x == translation.x {
-                //info!("None2");
-                return None;
-            }
-            // fix left or right distance
-            // fix -> x value
-            let way_x = way_translation.x;
-            let x = translation.x;
-            if (way_x - x).abs() < threshold {
-                //info!("here! x:{}", way_x);
-                Some((way_x, true))
-            } else {
-                None
-            }
-        }
-    }
-}
-
-fn change_direction(
+pub fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Player)>,
+    mut query: Query<(&mut Direction, &mut Velocity), With<Player>>,
 ) {
-    for (mut direction, mut player) in query.iter_mut() {
+    for (mut direction, mut velocity) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
+            //println!("left");
             Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
+            //println!("down");
             Some(Direction::Down)
         } else if keyboard_input.pressed(KeyCode::Up) {
+            //println!("up");
             Some(Direction::Up)
         } else if keyboard_input.pressed(KeyCode::Right) {
+            //println!("right");
             Some(Direction::Right)
         } else {
+            //println!("none");
             None
         };
 
         if let Some(dir) = movement_action {
             *direction = dir;
-            player.is_moving = true;
+            velocity.current = velocity.max;
         } else {
-            player.is_moving = false;
+            velocity.current = 0.0;
         }
     }
 }
 
+fn move_or_turn(
+    unit_pos: &Vec2,
+    direction: &Direction,
+    wall_pos_query: &Query<&Transform, With<Wall>>, // TODO: doesnt match destructible walls for some reaon
+) -> Option<Vec2> {
+    let velocity_vec = get_velocity_vec(direction, 2.0);
+
+    let new_unit_pos = *unit_pos + velocity_vec;
+    let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
+        vecs_xy_intersect(new_unit_pos, wall_tranform.translation.truncate())
+    });
+
+    match maybe_wall {
+        None => Some(new_unit_pos),
+        Some(wall_transform) => {
+            let (adjacent_cell_pos, adjacent_cell_direction) = get_adjacent_cell_entrance(
+                direction,
+                unit_pos,
+                &wall_transform.translation.truncate(),
+            );
+
+            let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
+                vecs_xy_intersect(adjacent_cell_pos, wall_tranform.translation.truncate())
+            });
+
+            if has_adjacent_wall {
+                None
+            } else {
+                Some(*unit_pos + get_velocity_vec(&adjacent_cell_direction, 2.0))
+            }
+        }
+    }
+}
+
+fn get_adjacent_cell_entrance(
+    direction: &Direction,
+    unit_pos: &Vec2,
+    wall_pos: &Vec2,
+) -> (Vec2, Direction) {
+    match direction {
+        Direction::Left | Direction::Right => {
+            let upper = wall_pos.y + TILE_WIDTH;
+            let lower = wall_pos.y - TILE_WIDTH;
+
+            if (upper - unit_pos.y) < (unit_pos.y - lower) {
+                (Vec2::new(unit_pos.x, upper), Direction::Up)
+            } else {
+                (Vec2::new(unit_pos.x, lower), Direction::Down)
+            }
+        }
+        Direction::Up | Direction::Down => {
+            let right = wall_pos.x + TILE_WIDTH;
+            let left = wall_pos.x - TILE_WIDTH;
+            if (right - unit_pos.x) < (unit_pos.x - left) {
+                (Vec2::new(right, unit_pos.y), Direction::Right)
+            } else {
+                (Vec2::new(left, unit_pos.y), Direction::Left)
+            }
+        }
+    }
+}
+
+fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec2 {
+    match direction {
+        Direction::Left => Vec2::new(-speed, 0.0),
+        Direction::Up => Vec2::new(0.0, speed),
+        Direction::Right => Vec2::new(speed, 0.0),
+        Direction::Down => Vec2::new(0.0, -speed),
+    }
+}

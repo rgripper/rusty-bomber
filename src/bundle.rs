@@ -15,9 +15,12 @@ pub struct PlayerBundle {
 impl Default for PlayerBundle {
     fn default() -> Self {
         Self {
-            player: Player { is_moving: false },
+            player: Player,
             direction: Direction::Right,
-            velocity: Velocity(1.0),
+            velocity: Velocity {
+                current: 0.0,
+                max: 1.0,
+            },
             destructable: Destructable::Player,
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
