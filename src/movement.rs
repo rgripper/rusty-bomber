@@ -22,54 +22,6 @@ pub fn player_movement(
     }
 }
 
-fn fix_player_translation(
-    direction: Direction,
-    translation: Vec3,
-    wall_translation: Vec3,
-    way_translation: Vec3,
-    threshold: f32,
-) -> Option<(Vec3, bool)> {
-    match direction {
-        Direction::Left | Direction::Right => {
-            if wall_translation.y == way_translation.y {
-                return None;
-            }
-            if way_translation.y == translation.y {
-                return None;
-            }
-
-            // fix up or down distance
-            // fix -> y value
-            let way_y = way_translation.y;
-            let y = translation.y;
-            // println!("way_y:{}, y:{},sub:{}",way_y,y,way_y - y);
-
-            if (way_y - y).abs() < threshold {
-                Some((Vec3::new(translation.x, way_y, 0.0), false))
-            } else {
-                None
-            }
-        }
-        Direction::Up | Direction::Down => {
-            if wall_translation.x == way_translation.x {
-                return None;
-            }
-            if way_translation.x == translation.x {
-                return None;
-            }
-            // fix left or right distance
-            // fix -> x value
-            let way_x = way_translation.x;
-            let x = translation.x;
-            if (way_x - x).abs() < threshold {
-                Some((Vec3::new(way_x, translation.y, 0.0), true))
-            } else {
-                None
-            }
-        }
-    }
-}
-
 pub fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Direction, &mut Velocity), With<Player>>,
