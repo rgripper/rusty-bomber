@@ -21,7 +21,6 @@ fn position_to_translation(
     mut query: Query<(&PlayerPosition, &mut Transform), Changed<PlayerPosition>>,
 ) {
     for (position, mut transform) in query.iter_mut() {
-        let position = position.0;
         transform.translation = Vec3::new(position.x, position.y + FIXED_DISTANCE, position.z);
     }
 }
@@ -33,8 +32,7 @@ pub fn player_movement(
         .iter_mut()
         .filter(|(velocity, _, _)| velocity.current > 0.0)
     {
-        if let Some(new_pos) =
-            move_or_turn(&player_position.0.truncate(), direction, &wall_pos_query)
+        if let Some(new_pos) = move_or_turn(&player_position.truncate(), direction, &wall_pos_query)
         {
             player_position.0 = new_pos.extend(PLAYER_LAYER);
             // conversion from Vec2 to Vec3

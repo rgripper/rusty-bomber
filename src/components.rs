@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use bevy::{
     math::{Vec2, Vec3},
     prelude::{Entity, Timer},
@@ -20,7 +22,6 @@ pub enum GameMode {
     MultiPlayer,
 }
 pub enum Destructable {
-    Player,
     NormalBox,
     PowerBuffBox,
     SpeedBuffBox,
@@ -89,5 +90,11 @@ impl From<Vec3> for PlayerPosition {
 impl From<Vec2> for PlayerPosition {
     fn from(v: Vec2) -> Self {
         PlayerPosition(v.extend(PLAYER_LAYER))
+    }
+}
+impl Deref for PlayerPosition {
+    type Target = Vec3;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

@@ -4,7 +4,9 @@ use crate::{
     assets::{
         BombMaterial, BombNumberBuffMaterial, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial,
     },
-    components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall},
+    components::{
+        Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, PlayerPosition, Wall,
+    },
     constants::{FIXED_DISTANCE, OBJECT_LAYER},
     events::{GameOverEvent, RecoveryBombNumberEvent},
     state::RunState,
@@ -23,6 +25,7 @@ impl BombSystems for SystemStage {
             .add_system(despawn_fire.system())
             .add_system(bomb_block_player.system())
             .add_system(bomb_destruction.system())
+            .add_system(bomb_player.system())
     }
 }
 
@@ -32,12 +35,11 @@ fn space_to_set_bomb(
     runstate: Res<RunState>,
     keyboard_input: Res<Input<KeyCode>>,
     bomb_position: Query<&Transform, With<Bomb>>,
-    mut player_query: Query<(&Transform, &BombPower, &mut BombNumber), With<Player>>,
+    mut player_query: Query<(&PlayerPosition, &BombPower, &mut BombNumber), With<Player>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         if let Some(entity) = runstate.player {
-            for (transform, power, mut number) in player_query.iter_mut() {
-                let position = transform.translation;
+            for (position, power, mut number) in player_query.iter_mut() {
                 fn handle(n: f32) -> f32 {
                     let a = n.floor();
                     let b = n.fract();
@@ -249,17 +251,43 @@ fn bomb_block_player(
         }
     }
 }
+fn bomb_player(
+    commands: &mut Commands,
+    query: Query<(Entity, &PlayerPosition)>,
+    runstate: Res<RunState>,
+    mut game_over_events: ResMut<Events<GameOverEvent>>,
+    fire_query: Query<&Transform, With<Fire>>,
+) {
+    let mut should_send_game_over = false;
+    for (entity, position) in query.iter() {
+        let mut need_destroy = false;
+        'fire: for fire in fire_query.iter() {
+            if aabb_detection(fire.translation.x, fire.translation.y, position.0) {
+                need_destroy = true;
+                break 'fire;
+            }
+        }
+        if need_destroy {
+            if let Some(player) = runstate.player {
+                if player == entity {
+                    should_send_game_over = true;
+                }
+            }
+            commands.despawn(entity);
+        }
+    }
+    if should_send_game_over {
+        game_over_events.send(GameOverEvent);
+    }
+}
 fn bomb_destruction(
     commands: &mut Commands,
-    runstate: Res<RunState>,
     destructable_wall_query: Query<(Entity, &Transform, &Destructable), With<Destructable>>,
     fire_query: Query<&Transform, With<Fire>>,
     power_buff_material: Res<PowerBuffMaterial>,
     speed_buff_material: Res<SpeedBuffMaterial>,
     bomb_number_buff_material: Res<BombNumberBuffMaterial>,
-    mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
-    let mut should_send_game_over = false;
     for (entity, transform, destructable) in destructable_wall_query.iter() {
         let position = transform.translation;
         let mut need_destroy = false;
@@ -272,14 +300,6 @@ fn bomb_destruction(
 
         if need_destroy {
             match destructable {
-                Destructable::Player => {
-                    if let Some(player) = runstate.player {
-                        if player == entity {
-                            should_send_game_over = true;
-                        }
-                        commands.despawn(entity);
-                    }
-                }
                 Destructable::NormalBox => {
                     commands.despawn(entity);
                 }
@@ -321,8 +341,5 @@ fn bomb_destruction(
                 }
             }
         }
-    }
-    if should_send_game_over {
-        game_over_events.send(GameOverEvent);
     }
 }
