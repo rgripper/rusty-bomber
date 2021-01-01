@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 bevy = { version = "*", features = [ "dynamic"] }
+anyhow = "1"

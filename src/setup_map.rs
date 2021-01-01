@@ -1,51 +1,16 @@
-use crate::Direction;
-use crate::*;
+use crate::{assets::*, bundle::PlayerBundle, components::{Destructable, InGame, Wall, Way}, constants::{FIXED_DISTANCE, FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER}, resources::Map, state::RunState, utils::TILE_WIDTH};
+use bevy::prelude::*;
 
 pub const GMAE_SETUP: &str = "game_setup";
 
-pub fn setup(commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
-    commands
-        .spawn(Camera2dBundle::default())
-        .insert_resource(PermaWallMaterial(
-            materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        ))
-        .insert_resource(DestructableWallMaterial(
-            materials.add(Color::rgb(1.0, 1.0, 0.7).into()),
-        ))
-        .insert_resource(FloorMaterial(
-            materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
-        ))
-        .insert_resource(PlayerMaterial(
-            materials.add(Color::rgb(0.7, 0.5, 1.0).into()),
-        ))
-        .insert_resource(CreatureMaterial(
-            materials.add(Color::rgb(1.0, 0.3, 0.5).into()),
-        ))
-        .insert_resource(BombMaterial(
-            materials.add(Color::rgb(0.0, 0.0, 0.0).into()),
-        ))
-        .insert_resource(FireMaterial(
-            materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
-        ))
-        .insert_resource(PowerBuffMaterial(
-            materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
-        ))
-        .insert_resource(SpeedBuffMaterial(
-            materials.add(Color::rgb(0.0, 1.0, 1.0).into()),
-        ))
-        .insert_resource(BombNumberBuffMaterial(
-            materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
-        ));
-}
-
-pub fn game_setup_room(
+pub fn setup_map(
     commands: &mut Commands,
     perma_wall_material: Res<PermaWallMaterial>,
     map_resource: Res<Map>,
     destructable_wall_material: Res<DestructableWallMaterial>,
-    player_material: Res<PlayerMaterial>,
+    player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_material: Res<FloorMaterial>,
-    //mut wall_position: Query<(&Wall, &mut Transform)>,
+    mut runstate: ResMut<RunState>,
 ) {
     let room_map = map_resource.map_value();
 
@@ -65,7 +30,8 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Wall);
+                        .with(Wall)
+                        .with(InGame);
                 }
 
                 2 => {
@@ -80,7 +46,8 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Way);
+                        .with(Way)
+                        .with(InGame);
                     commands
                         .spawn(SpriteBundle {
                             material: destructable_wall_material.0.clone(),
@@ -93,7 +60,8 @@ pub fn game_setup_room(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable::NormalBox);
+                        .with(Destructable::NormalBox)
+                        .with(InGame);
                 }
                 // When setting each level, the player’s position should be set flexibly
                 3 => {
@@ -109,21 +77,24 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Way);
+                        .with(Way)
+                        .with(InGame);
 
                     // player
-                    commands
-                        .spawn(SpriteBundle {
-                            material: player_material.0.clone(),
-                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                    let player = commands
+                        .spawn(SpriteSheetBundle {
+                            texture_atlas:player_texture_atlas.0.clone(),
                             transform: Transform::from_translation(Vec3::new(
                                 TILE_WIDTH * col_index as f32,
-                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32 + FIXED_DISTANCE,
                                 PLAYER_LAYER,
                             )),
                             ..Default::default()
                         })
-                        .with_bundle(PlayerBundle::default());
+                        .with_bundle(PlayerBundle::default())
+                        .with(InGame)
+                        .current_entity();
+                    runstate.player = player;
                 }
                 _ => {
                     commands
@@ -137,13 +108,10 @@ pub fn game_setup_room(
                             )),
                             ..Default::default()
                         })
-                        .with(Way);
+                        .with(Way)
+                        .with(InGame);
                 }
             }
         }
     }
-
-    // for (_player, mut transform) in &mut player_position.iter_mut() {
-    //     transform.translation += Vec3::new(10.0, 0.0, 0.0);
-    // }
 }

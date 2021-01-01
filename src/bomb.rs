@@ -1,57 +1,78 @@
-use crate::*;
+use bevy::prelude::*;
+
+use crate::{assets::{
+        BombMaterial, BombNumberBuffMaterial, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial,
+    }, components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall}, constants::{FIXED_DISTANCE, OBJECT_LAYER}, events::{GameOverEvent, RecoveryBombNumberEvent}, state::RunState, utils::{aabb_detection, TILE_WIDTH}};
 
 pub const BOMB: &str = "bomb";
+pub trait BombSystems {
+    fn bomb_systems(&mut self) -> &mut Self;
+}
+impl BombSystems for SystemStage {
+    fn bomb_systems(&mut self) -> &mut Self {
+        self.add_system(space_to_set_bomb.system())
+            .add_system(bomb_trigger.system())
+            .add_system(recovery_bomb_number.system())
+            .add_system(despawn_fire.system())
+            .add_system(bomb_block_player.system())
+            .add_system(bomb_destruction.system())
+    }
+}
 
-pub fn space_to_set_bomb(
+fn space_to_set_bomb(
     commands: &mut Commands,
     bomb_material: Res<BombMaterial>,
+    runstate: Res<RunState>,
     keyboard_input: Res<Input<KeyCode>>,
     bomb_position: Query<&Transform, With<Bomb>>,
-    mut player_query: Query<(Entity, &Transform, &BombPower, &mut BombNumber)>,
+    mut player_query: Query<(&Transform, &BombPower, &mut BombNumber), With<Player>>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
-        for (entity, transform, power, mut number) in player_query.iter_mut() {
-            let position = transform.translation;
-            fn handle(n: f32) -> f32 {
-                let a = n.floor();
-                let b = n.fract();
-                if b >= 0.5 {
-                    (a + 1.0) * TILE_WIDTH
-                } else {
-                    a * TILE_WIDTH
+        if let Some(entity) = runstate.player {
+            for (transform, power, mut number) in player_query.iter_mut() {
+                let position = transform.translation;
+                fn handle(n: f32) -> f32 {
+                    let a = n.floor();
+                    let b = n.fract();
+                    if b >= 0.5 {
+                        (a + 1.0) * TILE_WIDTH
+                    } else {
+                        a * TILE_WIDTH
+                    }
                 }
-            }
-            let number_x = position.x / TILE_WIDTH;
-            let number_y = position.y / TILE_WIDTH;
-            let one = Vec3::new(handle(number_x), handle(number_y), OBJECT_LAYER);
+                let number_x = position.x / TILE_WIDTH;
+                let number_y = (position.y - FIXED_DISTANCE)/ TILE_WIDTH;
+                let one = Vec3::new(handle(number_x), handle(number_y), OBJECT_LAYER);
 
-            let mut is_not_exist = true;
-            'bomb: for bomb_position in bomb_position.iter() {
-                if bomb_position.translation == one {
-                    is_not_exist = false;
-                    break 'bomb;
+                let mut is_not_exist = true;
+                'bomb: for bomb_position in bomb_position.iter() {
+                    if bomb_position.translation == one {
+                        is_not_exist = false;
+                        break 'bomb;
+                    }
                 }
-            }
-            if is_not_exist && number.is_enough() {
-                commands
-                    .spawn(SpriteBundle {
-                        material: bomb_material.0.clone(),
-                        sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
-                        transform: Transform::from_translation(one),
-                        ..Default::default()
-                    })
-                    .with(Bomb {
-                        timer: Timer::from_seconds(3.0, false),
-                        player: entity,
-                    })
-                    .with(BombPower(power.0));
-                number.current += 1;
+                if is_not_exist && number.is_enough() {
+                    commands
+                        .spawn(SpriteBundle {
+                            material: bomb_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(one),
+                            ..Default::default()
+                        })
+                        .with(Bomb {
+                            timer: Timer::from_seconds(3.0, false),
+                            player: entity,
+                        })
+                        .with(BombPower(power.0))
+                        .with(InGame);
+                    number.current += 1;
+                }
             }
         }
     }
 }
 
-pub fn bomb_trigger(
+fn bomb_trigger(
     commands: &mut Commands,
     time: Res<Time>,
     mut query: Query<(Entity, &mut Bomb, &BombPower, &Transform)>,
@@ -73,7 +94,8 @@ pub fn bomb_trigger(
                     )),
                     ..Default::default()
                 })
-                .with(Fire(Timer::from_seconds(0.5, false)));
+                .with(Fire(Timer::from_seconds(0.5, false)))
+                .with(InGame);
 
             let (mut up, mut down, mut left, mut right) = (true, true, true, true);
             for i in 1..=power.0 {
@@ -97,7 +119,8 @@ pub fn bomb_trigger(
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)));
+                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(InGame);
                     }
                 }
 
@@ -120,7 +143,8 @@ pub fn bomb_trigger(
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)));
+                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(InGame);
                     }
                 }
 
@@ -143,7 +167,8 @@ pub fn bomb_trigger(
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)));
+                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(InGame);
                     }
                 }
 
@@ -166,7 +191,8 @@ pub fn bomb_trigger(
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)));
+                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(InGame);
                     }
                 }
             }
@@ -176,7 +202,7 @@ pub fn bomb_trigger(
     }
 }
 
-pub fn recovery_bomb_number(
+fn recovery_bomb_number(
     recovery_bomb_number_events: Res<Events<RecoveryBombNumberEvent>>,
     mut events_reader: Local<EventReader<RecoveryBombNumberEvent>>,
     mut player_query: Query<(Entity, &mut BombNumber), With<Player>>,
@@ -186,26 +212,22 @@ pub fn recovery_bomb_number(
         'bomb_number: for (player, mut number) in player_query.iter_mut() {
             if entity == player {
                 number.current -= 1;
-                info!("current:{}", number.current);
-                info!("max:{}", number.max);
+                // info!("current:{}", number.current);
+                // info!("max:{}", number.max);
                 break 'bomb_number;
             }
         }
     }
 }
 
-pub fn despawn_fire(
-    commands: &mut Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut Fire)>,
-) {
+fn despawn_fire(commands: &mut Commands, time: Res<Time>, mut query: Query<(Entity, &mut Fire)>) {
     for (entity, mut fire) in query.iter_mut() {
         if fire.0.tick(time.delta_seconds()).finished() {
             commands.despawn(entity);
         }
     }
 }
-pub fn bomb_block_player(
+fn bomb_block_player(
     commands: &mut Commands,
     bomb_query: Query<(Entity, &Transform), (With<Bomb>, Without<Wall>)>,
     player_query: Query<&Transform, With<Player>>,
@@ -213,15 +235,16 @@ pub fn bomb_block_player(
     for (entity, bomb_position) in bomb_query.iter() {
         for player_position in player_query.iter() {
             let x = player_position.translation.x;
-            let y = player_position.translation.y;
+            let y = player_position.translation.y - FIXED_DISTANCE;
             if !aabb_detection(x, y, bomb_position.translation) {
                 commands.insert_one(entity, Wall);
             }
         }
     }
 }
-pub fn bomb_destruction(
+fn bomb_destruction(
     commands: &mut Commands,
+    runstate: Res<RunState>,
     destructable_wall_query: Query<(Entity, &Transform, &Destructable), With<Destructable>>,
     fire_query: Query<&Transform, With<Fire>>,
     power_buff_material: Res<PowerBuffMaterial>,
@@ -229,6 +252,7 @@ pub fn bomb_destruction(
     bomb_number_buff_material: Res<BombNumberBuffMaterial>,
     mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
+    let mut should_send_game_over = false;
     for (entity, transform, destructable) in destructable_wall_query.iter() {
         let position = transform.translation;
         let mut need_destroy = false;
@@ -242,7 +266,12 @@ pub fn bomb_destruction(
         if need_destroy {
             match destructable {
                 Destructable::Player => {
-                    game_over_events.send(GameOverEvent(entity));
+                    if let Some(player) = runstate.player {
+                        if player == entity {
+                            should_send_game_over = true;
+                        }
+                        commands.despawn(entity);
+                    }
                 }
                 Destructable::NormalBox => {
                     commands.despawn(entity);
@@ -256,7 +285,8 @@ pub fn bomb_destruction(
                             transform: Transform::from_translation(position),
                             ..Default::default()
                         })
-                        .with(Buff::PowerBuff);
+                        .with(Buff::PowerBuff)
+                        .with(InGame);
                 }
                 Destructable::SpeedBuffBox => {
                     commands.despawn(entity);
@@ -267,7 +297,8 @@ pub fn bomb_destruction(
                             transform: Transform::from_translation(position),
                             ..Default::default()
                         })
-                        .with(Buff::SpeedBuff);
+                        .with(Buff::SpeedBuff)
+                        .with(InGame);
                 }
                 Destructable::BombNumberBuffBox => {
                     commands.despawn(entity);
@@ -278,9 +309,13 @@ pub fn bomb_destruction(
                             transform: Transform::from_translation(position),
                             ..Default::default()
                         })
-                        .with(Buff::BombNumberBuff);
+                        .with(Buff::BombNumberBuff)
+                        .with(InGame);
                 }
             }
         }
+    }
+    if should_send_game_over {
+        game_over_events.send(GameOverEvent);
     }
 }
