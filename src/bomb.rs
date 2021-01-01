@@ -1,8 +1,15 @@
 use bevy::prelude::*;
 
-use crate::{assets::{
+use crate::{
+    assets::{
         BombMaterial, BombNumberBuffMaterial, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial,
-    }, components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall}, constants::{FIXED_DISTANCE, OBJECT_LAYER}, events::{GameOverEvent, RecoveryBombNumberEvent}, state::RunState, utils::{aabb_detection, TILE_WIDTH}};
+    },
+    components::{Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, Wall},
+    constants::{FIXED_DISTANCE, OBJECT_LAYER},
+    events::{GameOverEvent, RecoveryBombNumberEvent},
+    state::RunState,
+    utils::{aabb_detection, TILE_WIDTH},
+};
 
 pub const BOMB: &str = "bomb";
 pub trait BombSystems {
@@ -41,7 +48,7 @@ fn space_to_set_bomb(
                     }
                 }
                 let number_x = position.x / TILE_WIDTH;
-                let number_y = (position.y - FIXED_DISTANCE)/ TILE_WIDTH;
+                let number_y = (position.y - FIXED_DISTANCE) / TILE_WIDTH;
                 let one = Vec3::new(handle(number_x), handle(number_y), OBJECT_LAYER);
 
                 let mut is_not_exist = true;

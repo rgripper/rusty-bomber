@@ -1,4 +1,7 @@
-use bevy::{prelude::{ColorMaterial, Handle}, sprite::TextureAtlas};
+use bevy::{
+    prelude::{ColorMaterial, Handle},
+    sprite::TextureAtlas,
+};
 
 pub struct LifeMaterial(pub Handle<ColorMaterial>);
 pub struct PermaWallMaterial(pub Handle<ColorMaterial>);

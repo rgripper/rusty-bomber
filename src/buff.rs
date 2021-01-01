@@ -32,8 +32,7 @@ fn buffs(
                     }
                     Buff::SpeedBuff => {
                         // TODO:
-                        velocity.0 *= 1.2;
-
+                        velocity.0 += 1.0;
                     }
                     Buff::BombNumberBuff => {
                         number.max += 1;

@@ -1,6 +1,15 @@
 use bevy::prelude::*;
 
-use crate::{animate::AnimateSystems, bomb::BombSystems, buff::BuffSystems, components::InGame, events::GameOverEvent, movement::MovementSystems, setup_map::setup_map, ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy}};
+use crate::{
+    animate::AnimateSystems,
+    bomb::BombSystems,
+    buff::BuffSystems,
+    components::InGame,
+    events::GameOverEvent,
+    movement::MovementSystems,
+    setup_map::setup_map,
+    ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
+};
 
 #[derive(Clone, PartialEq)]
 pub enum AppState {

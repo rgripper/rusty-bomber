@@ -1,4 +1,12 @@
-use crate::{assets::*, bundle::PlayerBundle, components::{Destructable, InGame, Wall, Way}, constants::{FIXED_DISTANCE, FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER}, resources::Map, state::RunState, utils::TILE_WIDTH};
+use crate::{
+    assets::*,
+    bundle::PlayerBundle,
+    components::{Destructable, InGame, Wall, Way},
+    constants::{FIXED_DISTANCE, FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
+    resources::Map,
+    state::RunState,
+    utils::TILE_WIDTH,
+};
 use bevy::prelude::*;
 
 pub const GMAE_SETUP: &str = "game_setup";
@@ -83,10 +91,11 @@ pub fn setup_map(
                     // player
                     let player = commands
                         .spawn(SpriteSheetBundle {
-                            texture_atlas:player_texture_atlas.0.clone(),
+                            texture_atlas: player_texture_atlas.0.clone(),
                             transform: Transform::from_translation(Vec3::new(
                                 TILE_WIDTH * col_index as f32,
-                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32 + FIXED_DISTANCE,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32
+                                    + FIXED_DISTANCE,
                                 PLAYER_LAYER,
                             )),
                             ..Default::default()
@@ -95,6 +104,96 @@ pub fn setup_map(
                         .with(InGame)
                         .current_entity();
                     runstate.player = player;
+                }
+                4 => {
+                    // way
+                    commands
+                        .spawn(SpriteBundle {
+                            material: floor_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Way)
+                        .with(InGame);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: destructable_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                OBJECT_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Wall)
+                        .with(Destructable::BombNumberBuffBox)
+                        .with(InGame);
+                }
+                5 => {
+                    // way
+                    commands
+                        .spawn(SpriteBundle {
+                            material: floor_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Way)
+                        .with(InGame);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: destructable_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                OBJECT_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Wall)
+                        .with(Destructable::PowerBuffBox)
+                        .with(InGame);
+                }
+                6 => {
+                    // way
+                    commands
+                        .spawn(SpriteBundle {
+                            material: floor_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Way)
+                        .with(InGame);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: destructable_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                OBJECT_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Wall)
+                        .with(Destructable::SpeedBuffBox)
+                        .with(InGame);
                 }
                 _ => {
                     commands
