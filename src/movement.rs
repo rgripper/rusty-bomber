@@ -1,22 +1,42 @@
-use crate::Direction;
-use crate::*;
+use crate::{
+    components::{Direction, Player, PlayerPosition, Velocity, Wall},
+    constants::{FIXED_DISTANCE, PLAYER_LAYER},
+    utils::{vecs_xy_intersect, TILE_WIDTH},
+};
+use bevy::prelude::*;
 
 pub const MOVEMENT: &str = "movement";
 
+pub trait MovementSystems {
+    fn movement_systems(&mut self) -> &mut Self;
+}
+impl MovementSystems for SystemStage {
+    fn movement_systems(&mut self) -> &mut Self {
+        self.add_system(player_movement.system())
+            .add_system(change_direction.system())
+            .add_system(position_to_translation.system())
+    }
+}
+fn position_to_translation(
+    mut query: Query<(&PlayerPosition, &mut Transform), Changed<PlayerPosition>>,
+) {
+    for (position, mut transform) in query.iter_mut() {
+        let position = position.0;
+        transform.translation = Vec3::new(position.x, position.y + FIXED_DISTANCE, position.z);
+    }
+}
 pub fn player_movement(
-    mut query: Query<(&Velocity, &Direction, &mut Transform), (With<Player>, Changed<Velocity>)>,
+    mut query: Query<(&Velocity, &Direction, &mut PlayerPosition), With<Player>>,
     wall_pos_query: Query<&Transform, With<Wall>>,
 ) {
-    for (_, direction, mut unit_transform) in query
+    for (_, direction, mut player_position) in query
         .iter_mut()
         .filter(|(velocity, _, _)| velocity.current > 0.0)
     {
-        if let Some(new_pos) = move_or_turn(
-            &unit_transform.translation.truncate(),
-            direction,
-            &wall_pos_query,
-        ) {
-            unit_transform.translation = new_pos.extend(unit_transform.translation.z);
+        if let Some(new_pos) =
+            move_or_turn(&player_position.0.truncate(), direction, &wall_pos_query)
+        {
+            player_position.0 = new_pos.extend(PLAYER_LAYER);
             // conversion from Vec2 to Vec3
         }
     }
@@ -31,7 +51,7 @@ pub fn change_direction(
             //println!("left");
             Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
-            // println!("down");
+            //println!("down");
             Some(Direction::Down)
         } else if keyboard_input.pressed(KeyCode::Up) {
             //println!("up");

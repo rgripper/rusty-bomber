@@ -1,8 +1,22 @@
-use crate::*;
+use bevy::prelude::*;
+
+use crate::{
+    components::{BombNumber, BombPower, Buff, Player, Velocity},
+    utils::aabb_detection,
+};
 
 pub const BUFF: &str = "BUFF";
 
-pub fn buffs(
+pub trait BuffSystems {
+    fn buff_systems(&mut self) -> &mut Self;
+}
+impl BuffSystems for SystemStage {
+    fn buff_systems(&mut self) -> &mut Self {
+        self.add_system(buffs.system())
+    }
+}
+
+fn buffs(
     commands: &mut Commands,
     buff_query: Query<(Entity, &Transform, &Buff), With<Buff>>,
     mut player: Query<(&Transform, &mut BombPower, &mut BombNumber, &mut Velocity), With<Player>>,
