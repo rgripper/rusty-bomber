@@ -80,54 +80,78 @@ fn move_or_turn(
 
     let new_unit_pos = *unit_pos + velocity_vec;
     let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
-        vecs_xy_intersect(new_unit_pos, wall_tranform.translation.truncate())
+        vecs_xy_intersect(&new_unit_pos, &wall_tranform.translation.truncate())
     });
 
     match maybe_wall {
         None => Some(new_unit_pos),
         Some(wall_transform) => {
-            let (adjacent_cell_pos, adjacent_cell_direction) = get_adjacent_cell_entrance(
-                direction,
-                unit_pos,
-                &wall_transform.translation.truncate(),
-            );
+            let (turn_point_1, turn_point_2, adjacent_cell_direction) =
+                get_turn_waypoints(direction, unit_pos, &wall_transform.translation.truncate());
 
-            let has_adjacent_wall = wall_pos_query.iter().any(|wall_tranform| {
-                vecs_xy_intersect(adjacent_cell_pos, wall_tranform.translation.truncate())
+            let has_free_waypoints = wall_pos_query.iter().all(|other_wall_tranform| {
+                let other_wall_pos = &other_wall_tranform.translation.truncate();
+                !vecs_xy_intersect(&turn_point_1, other_wall_pos)
+                    && !vecs_xy_intersect(&turn_point_2, other_wall_pos)
             });
 
-            if has_adjacent_wall {
-                None
-            } else {
+            if has_free_waypoints {
+                info!(
+                    "NO wall at {:?} {:?} {:?}",
+                    turn_point_1, turn_point_2, adjacent_cell_direction
+                );
+
                 Some(*unit_pos + get_velocity_vec(&adjacent_cell_direction, 2.0))
+            } else {
+                info!(
+                    "has wall at {:?} {:?} {:?}",
+                    turn_point_1, turn_point_2, adjacent_cell_direction
+                );
+                None
             }
         }
     }
 }
 
-fn get_adjacent_cell_entrance(
+fn get_turn_waypoints(
     direction: &Direction,
     unit_pos: &Vec2,
     wall_pos: &Vec2,
-) -> (Vec2, Direction) {
+) -> (Vec2, Vec2, Direction) {
     match direction {
         Direction::Left | Direction::Right => {
             let upper = wall_pos.y + TILE_WIDTH;
             let lower = wall_pos.y - TILE_WIDTH;
 
             if (upper - unit_pos.y) < (unit_pos.y - lower) {
-                (Vec2::new(unit_pos.x, upper), Direction::Up)
+                (
+                    Vec2::new(unit_pos.x, upper),
+                    Vec2::new(wall_pos.x, upper),
+                    Direction::Up,
+                )
             } else {
-                (Vec2::new(unit_pos.x, lower), Direction::Down)
+                (
+                    Vec2::new(unit_pos.x, lower),
+                    Vec2::new(wall_pos.x, lower),
+                    Direction::Down,
+                )
             }
         }
         Direction::Up | Direction::Down => {
             let right = wall_pos.x + TILE_WIDTH;
             let left = wall_pos.x - TILE_WIDTH;
             if (right - unit_pos.x) < (unit_pos.x - left) {
-                (Vec2::new(right, unit_pos.y), Direction::Right)
+                (
+                    Vec2::new(right, unit_pos.y),
+                    Vec2::new(right, wall_pos.y),
+                    Direction::Right,
+                )
             } else {
-                (Vec2::new(left, unit_pos.y), Direction::Left)
+                (
+                    Vec2::new(left, unit_pos.y),
+                    Vec2::new(left, wall_pos.y),
+                    Direction::Left,
+                )
             }
         }
     }

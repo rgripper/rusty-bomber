@@ -42,7 +42,7 @@ pub fn get_way_translation(player_position: Vec2) -> Option<(Vec3, Vec3)> {
         }
     }
 }
-pub fn vecs_xy_intersect(first: Vec2, second: Vec2) -> bool {
+pub fn vecs_xy_intersect(first: &Vec2, second: &Vec2) -> bool {
     first.x + TILE_WIDTH > second.x
         && second.x + TILE_WIDTH > first.x
         && first.y + TILE_WIDTH > second.y

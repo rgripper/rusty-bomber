@@ -55,7 +55,8 @@ impl BombNumber {
 }
 pub struct Fire(pub Timer);
 pub struct Dizziness(Timer, f32);
-#[derive(PartialEq, Copy, Clone)]
+
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Direction {
     Left,
     Up,
