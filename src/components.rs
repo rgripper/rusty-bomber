@@ -34,7 +34,6 @@ pub struct Velocity {
     pub current: f32,
 }
 
-pub struct Creature;
 
 pub struct Bomb {
     pub timer: Timer,
@@ -58,11 +57,12 @@ pub struct Dizziness(Timer, f32);
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Direction {
-    Left,
-    Up,
-    Right,
-    Down,
+    Left = 0,
+    Up = 1,
+    Right = 2,
+    Down = 3,
 }
+
 pub struct PlayerAnimation {
     pub indexs: [u32; 3],
 }

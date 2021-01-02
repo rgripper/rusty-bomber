@@ -13,8 +13,6 @@ pub struct PlayerTextureAtlas(pub Handle<TextureAtlas>);
 
 pub struct BombMaterial(pub Handle<ColorMaterial>);
 
-pub struct CreatureMaterial(pub Handle<ColorMaterial>);
-
 pub struct FireMaterial(pub Handle<ColorMaterial>);
 
 pub struct PowerBuffMaterial(pub Handle<ColorMaterial>);

@@ -1,6 +1,7 @@
 use crate::{
     components::{Direction, Player, PlayerPosition, Velocity, Wall},
     constants::{FIXED_DISTANCE, PLAYER_LAYER},
+    creatures::creature_movement,
     utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 use bevy::prelude::*;
@@ -13,6 +14,7 @@ pub trait MovementSystems {
 impl MovementSystems for SystemStage {
     fn movement_systems(&mut self) -> &mut Self {
         self.add_system(player_movement.system())
+            .add_system(creature_movement.system())
             .add_system(change_direction.system())
             .add_system(position_to_translation.system())
     }
@@ -71,7 +73,7 @@ pub fn change_direction(
     }
 }
 
-fn move_or_turn(
+pub fn move_or_turn(
     unit_pos: &Vec2,
     direction: &Direction,
     wall_pos_query: &Query<&Transform, With<Wall>>, // TODO: doesnt match destructible walls for some reaon
@@ -96,17 +98,8 @@ fn move_or_turn(
             });
 
             if has_free_waypoints {
-                info!(
-                    "NO wall at {:?} {:?} {:?}",
-                    turn_point_1, turn_point_2, adjacent_cell_direction
-                );
-
                 Some(*unit_pos + get_velocity_vec(&adjacent_cell_direction, 2.0))
             } else {
-                info!(
-                    "has wall at {:?} {:?} {:?}",
-                    turn_point_1, turn_point_2, adjacent_cell_direction
-                );
                 None
             }
         }

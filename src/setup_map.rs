@@ -3,6 +3,7 @@ use crate::{
     bundle::PlayerBundle,
     components::{Destructable, InGame, PlayerPosition, Wall, Way},
     constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
+    creatures::{Creature, CreatureBundle, CreatureMaterial},
     resources::Map,
     state::RunState,
     utils::TILE_WIDTH,
@@ -16,6 +17,7 @@ pub fn setup_map(
     perma_wall_material: Res<PermaWallMaterial>,
     map_resource: Res<Map>,
     destructable_wall_material: Res<DestructableWallMaterial>,
+    creature_material: Res<CreatureMaterial>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_material: Res<FloorMaterial>,
     mut runstate: ResMut<RunState>,
@@ -193,6 +195,37 @@ pub fn setup_map(
                         .with(Wall)
                         .with(Destructable::SpeedBuffBox)
                         .with(InGame);
+                }
+                7 => {
+                    // way
+                    commands
+                        .spawn(SpriteBundle {
+                            material: floor_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Way)
+                        .with(InGame);
+                    // creature
+                    commands
+                        .spawn(SpriteBundle {
+                            material: creature_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with_bundle(CreatureBundle::default())
+                        .with(InGame)
+                        .current_entity();
                 }
                 _ => {
                     commands

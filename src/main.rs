@@ -7,6 +7,8 @@ use state::*;
 use state_jumper::jump_state;
 use ui::{draw_blink_system, ButtonMaterials};
 
+use creatures::*;
+
 pub mod assets;
 
 pub mod animate;
@@ -15,6 +17,7 @@ pub mod buff;
 pub mod bundle;
 pub mod components;
 pub mod constants;
+pub mod creatures;
 pub mod errors;
 pub mod events;
 pub mod movement;
