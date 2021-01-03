@@ -8,9 +8,10 @@ use crate::{
         Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, PlayerPosition, Wall,
     },
     constants::{FIXED_DISTANCE, OBJECT_LAYER},
+    creatures::Creature,
     events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
     state::RunState,
-    utils::{aabb_detection, TILE_WIDTH},
+    utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH},
 };
 
 pub const BOMB: &str = "bomb";
@@ -26,6 +27,7 @@ impl BombSystems for SystemStage {
             .add_system(bomb_block_player.system())
             .add_system(bomb_destruction.system())
             .add_system(bomb_player.system())
+            .add_system(bomb_creature.system())
     }
 }
 
@@ -251,6 +253,8 @@ fn bomb_block_player(
         }
     }
 }
+
+// TODO: refactor to be `bomb_unit`
 fn bomb_player(
     commands: &mut Commands,
     query: Query<(Entity, &PlayerPosition)>,
@@ -280,6 +284,25 @@ fn bomb_player(
         game_over_events.send(GameOverEvent(GameOverType::Defeat));
     }
 }
+
+// TODO: refactor to be `bomb_unit`
+fn bomb_creature(
+    commands: &mut Commands,
+    query: Query<(Entity, &Transform), With<Creature>>,
+    fire_query: Query<&Transform, With<Fire>>,
+) {
+    for (entity, position) in query.iter() {
+        if fire_query.iter().any(|fire| {
+            vecs_xy_intersect(
+                &fire.translation.truncate(),
+                &position.translation.truncate(),
+            )
+        }) {
+            commands.despawn(entity);
+        }
+    }
+}
+
 fn bomb_destruction(
     commands: &mut Commands,
     destructable_wall_query: Query<(Entity, &Transform, &Destructable), With<Destructable>>,
