@@ -1,7 +1,6 @@
 use crate::{
     components::{Direction, Player, PlayerPosition, Velocity, Wall},
     constants::{FIXED_DISTANCE, PLAYER_LAYER},
-    creatures::creature_movement,
     utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 use bevy::prelude::*;
@@ -14,7 +13,6 @@ pub trait MovementSystems {
 impl MovementSystems for SystemStage {
     fn movement_systems(&mut self) -> &mut Self {
         self.add_system(player_movement.system())
-            .add_system(creature_movement.system())
             .add_system(change_direction.system())
             .add_system(position_to_translation.system())
     }

@@ -5,6 +5,7 @@ use crate::{
     bomb::BombSystems,
     buff::BuffSystems,
     components::InGame,
+    creatures::CreatureSystems,
     events::GameOverEvent,
     movement::MovementSystems,
     setup_map::setup_map,
@@ -42,6 +43,7 @@ impl Plugin for AppStatePluge {
                             .bomb_systems()
                             .buff_systems()
                             .animate_systems()
+                            .creature_systems()
                             .add_system(game_over_events.system())
                     })
                     .on_state_exit(AppState::Game, exit_game_despawn.system())

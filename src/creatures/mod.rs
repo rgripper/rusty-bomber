@@ -1,18 +1,16 @@
 use crate::{
     components::{Direction, Player, PlayerPosition, Velocity, Wall},
     constants::PLAYER_LAYER,
+    events::GameOverEvent,
     movement::move_or_turn,
+    utils::vecs_xy_intersect,
 };
+use bevy::prelude::*;
 use bevy::{
-    ecs::{Query, ResMut, With},
-    prelude::{info, Assets, Handle, Transform},
-    render::color::Color,
+    ecs::{Query, ResMut, SystemStage, With},
     sprite::ColorMaterial,
 };
 use rand::{seq::SliceRandom, thread_rng};
-
-use crate::components::*;
-use bevy::{core::Timer, prelude::Bundle};
 
 #[derive(Bundle)]
 pub struct CreatureBundle {
@@ -46,7 +44,7 @@ const DIRECTIONS: [Direction; 4] = [
     Direction::Right,
 ];
 
-pub fn creature_movement(
+fn creature_movement(
     mut query: Query<(&Velocity, &mut Direction, &mut Transform), With<Creature>>,
     wall_pos_query: Query<&Transform, With<Wall>>,
 ) {
@@ -69,6 +67,32 @@ pub fn creature_movement(
             None => {
                 // always change. Yes, need to filter out current position
                 *direction = *DIRECTIONS.choose(&mut rng).unwrap();
+            }
+        }
+    }
+}
+
+pub trait CreatureSystems {
+    fn creature_systems(&mut self) -> &mut Self;
+}
+impl CreatureSystems for SystemStage {
+    fn creature_systems(&mut self) -> &mut Self {
+        self.add_system(creature_player_collision.system())
+            .add_system(creature_movement.system())
+    }
+}
+
+fn creature_player_collision(
+    mut player_query: Query<&mut PlayerPosition, With<Player>>,
+    mut creature_query: Query<&mut Transform, With<Creature>>,
+    mut game_over_events: ResMut<Events<GameOverEvent>>,
+) {
+    for player in player_query.iter_mut() {
+        let player_pos = &player.truncate();
+        for creature_transform in creature_query.iter_mut() {
+            if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
+                game_over_events.send(GameOverEvent);
+                // TODO: stop the game (stop movement system?)
             }
         }
     }
