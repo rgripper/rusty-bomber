@@ -8,6 +8,7 @@ use crate::{
     creatures::CreatureSystems,
     events::GameOverEvent,
     movement::MovementSystems,
+    portal::PortalSystems,
     setup_map::setup_map,
     ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
 };
@@ -44,6 +45,7 @@ impl Plugin for AppStatePluge {
                             .buff_systems()
                             .animate_systems()
                             .creature_systems()
+                            .portal_systems()
                             .add_system(game_over_events.system())
                     })
                     .on_state_exit(AppState::Game, exit_game_despawn.system())

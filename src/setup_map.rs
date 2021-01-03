@@ -2,8 +2,9 @@ use crate::{
     assets::*,
     bundle::PlayerBundle,
     components::{Destructable, InGame, PlayerPosition, Wall, Way},
-    constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
-    creatures::{Creature, CreatureBundle, CreatureMaterial},
+    constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER, PORTAL_LAYER},
+    creatures::{CreatureBundle, CreatureMaterial},
+    portal::*,
     resources::Map,
     state::RunState,
     utils::TILE_WIDTH,
@@ -17,6 +18,7 @@ pub fn setup_map(
     perma_wall_material: Res<PermaWallMaterial>,
     map_resource: Res<Map>,
     destructable_wall_material: Res<DestructableWallMaterial>,
+    portal_material: Res<PortalMaterial>,
     creature_material: Res<CreatureMaterial>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_material: Res<FloorMaterial>,
@@ -226,6 +228,49 @@ pub fn setup_map(
                         .with_bundle(CreatureBundle::default())
                         .with(InGame)
                         .current_entity();
+                }
+                8 => {
+                    // way
+                    commands
+                        .spawn(SpriteBundle {
+                            material: floor_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                FLOOR_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Way)
+                        .with(InGame);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: portal_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                PORTAL_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Portal)
+                        .with(InGame);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: destructable_wall_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(Vec3::new(
+                                TILE_WIDTH * col_index as f32,
+                                TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                OBJECT_LAYER,
+                            )),
+                            ..Default::default()
+                        })
+                        .with(Destructable::NormalBox)
+                        .with(Wall)
+                        .with(InGame);
                 }
                 _ => {
                     commands

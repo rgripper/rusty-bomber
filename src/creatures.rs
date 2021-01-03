@@ -1,7 +1,7 @@
 use crate::{
     components::{Direction, Player, PlayerPosition, Velocity, Wall},
     constants::PLAYER_LAYER,
-    events::GameOverEvent,
+    events::*,
     movement::move_or_turn,
     utils::vecs_xy_intersect,
 };
@@ -91,7 +91,7 @@ fn creature_player_collision(
         let player_pos = &player.truncate();
         for creature_transform in creature_query.iter_mut() {
             if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
-                game_over_events.send(GameOverEvent);
+                game_over_events.send(GameOverEvent(GameOverType::Defeat));
                 // TODO: stop the game (stop movement system?)
             }
         }

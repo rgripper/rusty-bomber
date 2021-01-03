@@ -1,4 +1,8 @@
 use bevy::prelude::Entity;
 
-pub struct GameOverEvent;
+pub enum GameOverType {
+    Victory,
+    Defeat,
+}
+pub struct GameOverEvent(pub GameOverType);
 pub struct RecoveryBombNumberEvent(pub Entity);

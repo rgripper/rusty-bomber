@@ -8,7 +8,7 @@ use crate::{
         Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, PlayerPosition, Wall,
     },
     constants::{FIXED_DISTANCE, OBJECT_LAYER},
-    events::{GameOverEvent, RecoveryBombNumberEvent},
+    events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
     state::RunState,
     utils::{aabb_detection, TILE_WIDTH},
 };
@@ -277,7 +277,7 @@ fn bomb_player(
         }
     }
     if should_send_game_over {
-        game_over_events.send(GameOverEvent);
+        game_over_events.send(GameOverEvent(GameOverType::Defeat));
     }
 }
 fn bomb_destruction(

@@ -2,6 +2,7 @@ use assets::*;
 use bevy::prelude::*;
 use errors::error_handler;
 use events::{GameOverEvent, RecoveryBombNumberEvent};
+use portal::PortalMaterial;
 use resources::Map;
 use state::*;
 use state_jumper::jump_state;
@@ -21,6 +22,7 @@ pub mod creatures;
 pub mod errors;
 pub mod events;
 pub mod movement;
+pub mod portal;
 pub mod resources;
 pub mod setup_map;
 pub mod state;
@@ -62,6 +64,9 @@ fn setup(
         ))
         .insert_resource(DestructableWallMaterial(
             materials.add(Color::rgb(1.0, 1.0, 0.7).into()),
+        ))
+        .insert_resource(PortalMaterial(
+            materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
         ))
         .insert_resource(FloorMaterial(
             materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
