@@ -2,7 +2,7 @@ use crate::{
     components::{Direction, Player, PlayerPosition, Velocity, Wall},
     constants::PLAYER_LAYER,
     events::*,
-    movement::move_or_turn,
+    player::move_or_turn,
     utils::vecs_xy_intersect,
 };
 use bevy::prelude::*;

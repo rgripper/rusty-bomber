@@ -1,6 +1,6 @@
 use crate::{
     assets::*,
-    bundle::PlayerBundle,
+    player::PlayerBundle,
     components::{Destructable, InGame, PlayerPosition, Wall, Way},
     constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER, PORTAL_LAYER},
     creatures::{CreatureBundle, CreatureMaterial},

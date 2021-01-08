@@ -12,16 +12,13 @@ use creatures::*;
 
 pub mod assets;
 
-pub mod animate;
 pub mod bomb;
 pub mod buff;
-pub mod bundle;
 pub mod components;
 pub mod constants;
 pub mod creatures;
 pub mod errors;
 pub mod events;
-pub mod movement;
 pub mod portal;
 pub mod resources;
 pub mod setup_map;
@@ -29,6 +26,7 @@ pub mod state;
 pub mod state_jumper;
 pub mod ui;
 pub mod utils;
+pub mod player;
 
 fn main() {
     App::build()
