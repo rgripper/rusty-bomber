@@ -100,12 +100,17 @@ fn game_over_events(
     mut game_state: ResMut<State<GameState>>,
 ) {
     for _ in reader.iter(&events) {
-        match game_state.set_next(GameState::GameOver) {
-            Ok(_) => {
-                info!("Game Over!");
-                break;
+        match game_state.current() {
+            GameState::GameOver => {}
+            _ => {
+                match game_state.set_next(GameState::GameOver) {
+                    Ok(_) => {
+                        info!("Game Over!");
+                        break;
+                    }
+                    Err(err) => error!("{}", err),
+                }
             }
-            Err(err) => error!("{}", err),
         }
     }
 }
