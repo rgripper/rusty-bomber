@@ -1,4 +1,11 @@
-use crate::{components::{Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition, Velocity, Wall}, constants::{FIXED_DISTANCE, PLAYER_LAYER}, utils::{vecs_xy_intersect, TILE_WIDTH}};
+use crate::{
+    components::{
+        Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition,
+        Velocity, Wall,
+    },
+    constants::{FIXED_DISTANCE, PLAYER_LAYER},
+    utils::{vecs_xy_intersect, TILE_WIDTH},
+};
 
 use bevy::prelude::*;
 
@@ -8,8 +15,8 @@ pub trait PlayerSystems {
 impl PlayerSystems for SystemStage {
     fn player_systems(&mut self) -> &mut Self {
         self
-        // movement
-        .add_system(player_movement.system())
+            // movement
+            .add_system(player_movement.system())
             .add_system(change_direction.system())
             .add_system(position_to_translation.system())
             // animate

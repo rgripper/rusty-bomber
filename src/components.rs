@@ -34,7 +34,6 @@ pub struct Velocity {
     pub current: f32,
 }
 
-
 pub struct Bomb {
     pub timer: Timer,
     pub player: Entity,

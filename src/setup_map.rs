@@ -1,9 +1,9 @@
 use crate::{
     assets::*,
-    player::PlayerBundle,
     components::{Destructable, InGame, PlayerPosition, Wall, Way},
     constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER, PORTAL_LAYER},
     creatures::{CreatureBundle, CreatureMaterial},
+    player::PlayerBundle,
     portal::*,
     resources::Map,
     state::RunState,

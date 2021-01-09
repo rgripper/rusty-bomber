@@ -1,18 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{
-    assets::{
-        BombMaterial, BombNumberBuffMaterial, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial,
-    },
-    components::{
-        Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player, PlayerPosition, Wall,
-    },
-    constants::{FIXED_DISTANCE, OBJECT_LAYER},
-    creatures::Creature,
-    events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
-    state::RunState,
-    utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH},
-};
+use crate::{assets::{BombNumberBuffMaterial, BombTextureAtlas, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial}, components::{
+        Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player,
+        PlayerPosition, Wall,
+    }, constants::{FIXED_DISTANCE, OBJECT_LAYER}, creatures::Creature, events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent}, state::RunState, utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH}};
 
 pub const BOMB: &str = "bomb";
 pub trait BombSystems {
@@ -28,12 +19,13 @@ impl BombSystems for SystemStage {
             .add_system(bomb_destruction.system())
             .add_system(bomb_player.system())
             .add_system(bomb_creature.system())
+            .add_system(animate_bomb.system())
     }
 }
 
 fn space_to_set_bomb(
     commands: &mut Commands,
-    bomb_material: Res<BombMaterial>,
+    bomb_texture_atlas: Res<BombTextureAtlas>,
     runstate: Res<RunState>,
     keyboard_input: Res<Input<KeyCode>>,
     bomb_position: Query<&Transform, With<Bomb>>,
@@ -64,17 +56,19 @@ fn space_to_set_bomb(
                 }
                 if is_not_exist && number.is_enough() {
                     commands
-                        .spawn(SpriteBundle {
-                            material: bomb_material.0.clone(),
-                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
-                            transform: Transform::from_translation(one),
-                            ..Default::default()
-                        })
+                        .spawn(
+                            SpriteSheetBundle { 
+                                texture_atlas:bomb_texture_atlas.0.clone(),
+                                transform: Transform::from_translation(one),
+                                ..Default::default()
+                            }
+                        )
                         .with(Bomb {
                             timer: Timer::from_seconds(3.0, false),
                             player: entity,
                         })
                         .with(BombPower(power.0))
+                        .with(Animation(Timer::from_seconds(1.0, true)))
                         .with(InGame);
                     number.current += 1;
                 }
@@ -82,7 +76,24 @@ fn space_to_set_bomb(
         }
     }
 }
-
+fn animate_bomb(
+    time: Res<Time>,
+    mut query: Query<(&mut Animation, &mut TextureAtlasSprite), With<Bomb>>,
+) {
+    for (mut animation, mut sprite) in query.iter_mut() {
+        // info!("index:{}",sprite.index);
+        animation.0.tick(time.delta_seconds());
+        if animation.0.just_finished() {
+            if sprite.index == 0 {
+                sprite.index = 1;
+            } else if sprite.index == 1 {
+                sprite.index = 2;
+            } else {
+                sprite.index = 0;
+            }
+        }
+    }
+}
 fn bomb_trigger(
     commands: &mut Commands,
     time: Res<Time>,
