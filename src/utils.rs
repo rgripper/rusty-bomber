@@ -2,8 +2,8 @@ use bevy::math::{Vec2, Vec3};
 
 use crate::constants::{FIXED_DISTANCE, FLOOR_LAYER};
 
-pub const TILE_WIDTH: f32 = 20.0;
-pub const HALF_TILE_WIDTH: f32 = 10.0;
+pub const TILE_WIDTH: f32 = 16.0;
+pub const HALF_TILE_WIDTH: f32 = 8.0;
 
 pub fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
     // collide(

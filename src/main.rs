@@ -53,8 +53,12 @@ fn setup(
     let player_texture_atlas =
         TextureAtlas::from_grid(player_texture_handle, Vec2::new(16.0, 32.0), 4, 3);
     let bomb_texture_handle = asset_server.load("bomb.png");
-    let bomb_texture_atlas = 
-    TextureAtlas::from_grid(bomb_texture_handle,Vec2::new(16.0, 16.0), 3, 1);
+    let bomb_texture_atlas =
+        TextureAtlas::from_grid(bomb_texture_handle, Vec2::new(16.0, 16.0), 3, 1);
+    let fire_texture_handle = asset_server.load("fire.png");
+    let fire_texture_atlas =
+        TextureAtlas::from_grid(fire_texture_handle, Vec2::new(16.0, 16.0), 4, 3);
+
     commands
         // cameras
         .spawn(Camera2dBundle::default())
@@ -71,13 +75,13 @@ fn setup(
         .insert_resource(FloorMaterial(
             materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
         ))
-        .insert_resource(PlayerTextureAtlas(texture_atlases.add(player_texture_atlas)))
+        .insert_resource(PlayerTextureAtlas(
+            texture_atlases.add(player_texture_atlas),
+        ))
         .insert_resource(BombTextureAtlas(texture_atlases.add(bomb_texture_atlas)))
+        .insert_resource(FireTextureAtlas(texture_atlases.add(fire_texture_atlas)))
         .insert_resource(CreatureMaterial(
             materials.add(Color::rgb(1.0, 0.3, 0.5).into()),
-        ))
-        .insert_resource(FireMaterial(
-            materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
         ))
         .insert_resource(PowerBuffMaterial(
             materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
