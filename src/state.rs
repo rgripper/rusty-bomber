@@ -1,6 +1,16 @@
 use bevy::prelude::*;
 
-use crate::{bomb::BombSystems, buff::BuffSystems, components::InGame, creatures::CreatureSystems, events::GameOverEvent, player::PlayerSystems, portal::PortalSystems, setup_map::setup_map, ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy}};
+use crate::{
+    bomb::BombSystems,
+    buff::BuffSystems,
+    components::InGame,
+    creatures::CreatureSystems,
+    events::GameOverEvent,
+    player::PlayerSystems,
+    portal::PortalSystems,
+    setup_map::setup_map,
+    ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
+};
 
 #[derive(Clone, PartialEq)]
 pub enum AppState {
@@ -102,15 +112,13 @@ fn game_over_events(
     for _ in reader.iter(&events) {
         match game_state.current() {
             GameState::GameOver => {}
-            _ => {
-                match game_state.set_next(GameState::GameOver) {
-                    Ok(_) => {
-                        info!("Game Over!");
-                        break;
-                    }
-                    Err(err) => error!("{}", err),
+            _ => match game_state.set_next(GameState::GameOver) {
+                Ok(_) => {
+                    info!("Game Over!");
+                    break;
                 }
-            }
+                Err(err) => error!("{}", err),
+            },
         }
     }
 }
