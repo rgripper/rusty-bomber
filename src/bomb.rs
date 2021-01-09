@@ -1,9 +1,20 @@
 use bevy::prelude::*;
 
-use crate::{assets::{BombNumberBuffMaterial, BombTextureAtlas, FireMaterial, PowerBuffMaterial, SpeedBuffMaterial}, components::{
-        Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Fire, InGame, Player,
-        PlayerPosition, Wall,
-    }, constants::{FIXED_DISTANCE, OBJECT_LAYER}, creatures::Creature, events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent}, state::RunState, utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH}};
+use crate::{
+    assets::{
+        BombNumberBuffMaterial, BombTextureAtlas, FireTextureAtlas, PowerBuffMaterial,
+        SpeedBuffMaterial,
+    },
+    components::{
+        Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Ember, Fire, InGame, Player,
+        PlayerPosition, Wall, FIRE_ANIMATE_TIME,
+    },
+    constants::{FIXED_DISTANCE, OBJECT_LAYER},
+    creatures::Creature,
+    events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
+    state::RunState,
+    utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH},
+};
 
 pub const BOMB: &str = "bomb";
 pub trait BombSystems {
@@ -20,6 +31,8 @@ impl BombSystems for SystemStage {
             .add_system(bomb_player.system())
             .add_system(bomb_creature.system())
             .add_system(animate_bomb.system())
+            .add_system(animate_fire.system())
+            .add_system(ember_trigger.system())
     }
 }
 
@@ -56,13 +69,11 @@ fn space_to_set_bomb(
                 }
                 if is_not_exist && number.is_enough() {
                     commands
-                        .spawn(
-                            SpriteSheetBundle { 
-                                texture_atlas:bomb_texture_atlas.0.clone(),
-                                transform: Transform::from_translation(one),
-                                ..Default::default()
-                            }
-                        )
+                        .spawn(SpriteSheetBundle {
+                            texture_atlas: bomb_texture_atlas.0.clone(),
+                            transform: Transform::from_translation(one),
+                            ..Default::default()
+                        })
                         .with(Bomb {
                             timer: Timer::from_seconds(3.0, false),
                             player: entity,
@@ -94,33 +105,70 @@ fn animate_bomb(
         }
     }
 }
+fn animate_fire(
+    time: Res<Time>,
+    mut query: Query<(&mut Animation, &mut TextureAtlasSprite), With<Fire>>,
+) {
+    for (mut animation, mut sprite) in query.iter_mut() {
+        info!("index:{}", sprite.index);
+        // 9 10 11 3
+        animation.0.tick(time.delta_seconds());
+        if animation.0.just_finished() {
+            if sprite.index == 8 {
+                sprite.index = 9;
+            } else if sprite.index == 9 {
+                sprite.index = 10;
+            } else if sprite.index == 10 {
+                sprite.index = 2;
+            }
+        }
+    }
+}
+
 fn bomb_trigger(
     commands: &mut Commands,
     time: Res<Time>,
     mut query: Query<(Entity, &mut Bomb, &BombPower, &Transform)>,
-    fire_material: Res<FireMaterial>,
-    wall_query: Query<&Transform, (With<Wall>, Without<Bomb>, Without<Destructable>)>,
+    fire_texture_atlas: Res<FireTextureAtlas>,
     mut recovery_bomb_number_events: ResMut<Events<RecoveryBombNumberEvent>>,
 ) {
     for (entity, mut bomb, power, transform) in query.iter_mut() {
         let translation = transform.translation;
         if bomb.timer.tick(time.delta_seconds()).finished() {
             commands
-                .spawn(SpriteBundle {
-                    material: fire_material.0.clone(),
-                    sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                .spawn(SpriteSheetBundle {
+                    texture_atlas: fire_texture_atlas.0.clone(),
                     transform: Transform::from_translation(Vec3::new(
                         translation.x,
                         translation.y,
                         OBJECT_LAYER,
                     )),
+                    sprite: TextureAtlasSprite::new(8),
                     ..Default::default()
                 })
-                .with(Fire(Timer::from_seconds(0.5, false)))
+                .with(Fire::default())
+                .with(Animation(Timer::from_seconds(FIRE_ANIMATE_TIME, true)))
+                .with(Ember::new(power.0))
                 .with(InGame);
 
+            commands.despawn(entity);
+            recovery_bomb_number_events.send(RecoveryBombNumberEvent(bomb.player));
+        }
+    }
+}
+fn ember_trigger(
+    commands: &mut Commands,
+    time: Res<Time>,
+    fire_texture_atlas: Res<FireTextureAtlas>,
+    mut fire_query: Query<(&Transform, &mut Ember)>,
+    wall_query: Query<&Transform, (With<Wall>, Without<Bomb>, Without<Destructable>)>,
+) {
+    for (transform, mut ember) in fire_query.iter_mut() {
+        let power = ember.1;
+        let translation = transform.translation;
+        if ember.0.tick(time.delta_seconds()).just_finished() {
             let (mut up, mut down, mut left, mut right) = (true, true, true, true);
-            for i in 1..=power.0 {
+            for i in 1..=power {
                 let i = i as f32;
                 if up {
                     let position =
@@ -131,17 +179,15 @@ fn bomb_trigger(
                         }
                     }
                     if up {
+                        let index = if i == (power as f32) { 4 } else { 5 };
                         commands
-                            .spawn(SpriteBundle {
-                                material: fire_material.0.clone(),
-                                sprite: Sprite::new(Vec2::new(
-                                    TILE_WIDTH as f32,
-                                    TILE_WIDTH as f32,
-                                )),
+                            .spawn(SpriteSheetBundle {
+                                texture_atlas: fire_texture_atlas.0.clone(),
+                                sprite: TextureAtlasSprite::new(index),
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(Fire::ember())
                             .with(InGame);
                     }
                 }
@@ -155,17 +201,15 @@ fn bomb_trigger(
                         }
                     }
                     if down {
+                        let index = if i == (power as f32) { 6 } else { 5 };
                         commands
-                            .spawn(SpriteBundle {
-                                material: fire_material.0.clone(),
-                                sprite: Sprite::new(Vec2::new(
-                                    TILE_WIDTH as f32,
-                                    TILE_WIDTH as f32,
-                                )),
+                            .spawn(SpriteSheetBundle {
+                                texture_atlas: fire_texture_atlas.0.clone(),
+                                sprite: TextureAtlasSprite::new(index),
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(Fire::ember())
                             .with(InGame);
                     }
                 }
@@ -179,17 +223,15 @@ fn bomb_trigger(
                         }
                     }
                     if left {
+                        let index = if i == (power as f32) { 0 } else { 1 };
                         commands
-                            .spawn(SpriteBundle {
-                                material: fire_material.0.clone(),
-                                sprite: Sprite::new(Vec2::new(
-                                    TILE_WIDTH as f32,
-                                    TILE_WIDTH as f32,
-                                )),
+                            .spawn(SpriteSheetBundle {
+                                texture_atlas: fire_texture_atlas.0.clone(),
+                                sprite: TextureAtlasSprite::new(index),
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(Fire::ember())
                             .with(InGame);
                     }
                 }
@@ -203,27 +245,22 @@ fn bomb_trigger(
                         }
                     }
                     if right {
+                        let index = if i == (power as f32) { 3 } else { 1 };
                         commands
-                            .spawn(SpriteBundle {
-                                material: fire_material.0.clone(),
-                                sprite: Sprite::new(Vec2::new(
-                                    TILE_WIDTH as f32,
-                                    TILE_WIDTH as f32,
-                                )),
+                            .spawn(SpriteSheetBundle {
+                                texture_atlas: fire_texture_atlas.0.clone(),
+                                sprite: TextureAtlasSprite::new(index),
                                 transform: Transform::from_translation(position),
                                 ..Default::default()
                             })
-                            .with(Fire(Timer::from_seconds(0.5, false)))
+                            .with(Fire::ember())
                             .with(InGame);
                     }
                 }
             }
-            commands.despawn(entity);
-            recovery_bomb_number_events.send(RecoveryBombNumberEvent(bomb.player));
         }
     }
 }
-
 fn recovery_bomb_number(
     recovery_bomb_number_events: Res<Events<RecoveryBombNumberEvent>>,
     mut events_reader: Local<EventReader<RecoveryBombNumberEvent>>,

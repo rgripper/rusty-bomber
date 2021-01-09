@@ -51,7 +51,27 @@ impl BombNumber {
         self.current < self.max
     }
 }
+pub const FIRE_LIFETIME: f32 = 0.5;
+pub const FIRE_ANIMATE_TIME: f32 = 0.05;
+pub const EMBER_LIFETIME: f32 = FIRE_LIFETIME - FIRE_ANIMATE_TIME * 3.0;
+pub const EMBER_START_TIME: f32 = FIRE_LIFETIME - EMBER_LIFETIME;
 pub struct Fire(pub Timer);
+impl Default for Fire {
+    fn default() -> Self {
+        Fire(Timer::from_seconds(FIRE_LIFETIME, false))
+    }
+}
+impl Fire {
+    pub fn ember() -> Self {
+        Fire(Timer::from_seconds(EMBER_LIFETIME, false))
+    }
+}
+pub struct Ember(pub Timer, pub i32);
+impl Ember {
+    pub fn new(power: i32) -> Self {
+        Ember(Timer::from_seconds(EMBER_START_TIME, false), power)
+    }
+}
 pub struct Dizziness(Timer, f32);
 
 #[derive(Debug, PartialEq, Copy, Clone)]

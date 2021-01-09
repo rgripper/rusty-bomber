@@ -11,9 +11,7 @@ pub struct FloorMaterial(pub Handle<ColorMaterial>);
 
 pub struct PlayerTextureAtlas(pub Handle<TextureAtlas>);
 
-
 pub struct BombTextureAtlas(pub Handle<TextureAtlas>);
-pub struct FireMaterial(pub Handle<ColorMaterial>);
 pub struct FireTextureAtlas(pub Handle<TextureAtlas>);
 
 pub struct PowerBuffMaterial(pub Handle<ColorMaterial>);
