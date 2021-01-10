@@ -26,6 +26,7 @@ pub enum Destructable {
     PowerBuffBox,
     SpeedBuffBox,
     BombNumberBuffBox,
+    Portal,
 }
 pub struct MaxAndCurrent(i32, i32);
 pub struct Player;
@@ -81,25 +82,34 @@ pub enum Direction {
     Right = 2,
     Down = 3,
 }
-
+pub const NEXT_PLAYER_SHEET: u32 = 14;
 pub struct PlayerAnimation {
-    pub indexs: [u32; 3],
+    pub indexs: Vec<u32>,
 }
 impl PlayerAnimation {
-    pub fn new(indexs: [u32; 3]) -> Self {
+    pub fn new(indexs: Vec<u32>) -> Self {
         Self { indexs }
+    }
+    pub fn next(self) -> Self {
+        Self::new(
+            self.indexs
+                .into_iter()
+                .map(|num| num + NEXT_PLAYER_SHEET)
+                .collect(),
+        )
     }
 }
 impl From<Direction> for PlayerAnimation {
     fn from(dir: Direction) -> Self {
         match dir {
-            Direction::Left => PlayerAnimation::new([0, 4, 8]),
-            Direction::Up => PlayerAnimation::new([2, 6, 10]),
-            Direction::Right => PlayerAnimation::new([3, 7, 11]),
-            Direction::Down => PlayerAnimation::new([1, 5, 9]),
+            Direction::Left => PlayerAnimation::new(vec![10, 11, 12, 13]),
+            Direction::Up => PlayerAnimation::new(vec![0, 8, 9]),
+            Direction::Right => PlayerAnimation::new(vec![4, 5, 6, 7]),
+            Direction::Down => PlayerAnimation::new(vec![1, 2, 3]),
         }
     }
 }
+
 pub struct PlayerPosition(pub Vec3);
 
 impl From<Vec3> for PlayerPosition {

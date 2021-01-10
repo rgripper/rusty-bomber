@@ -12,8 +12,9 @@ use crate::{
     constants::{FIXED_DISTANCE, OBJECT_LAYER},
     creatures::Creature,
     events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
+    portal::Portal,
     state::RunState,
-    utils::{aabb_detection, vecs_xy_intersect, TILE_WIDTH},
+    utils::{aabb_detection, vecs_xy_intersect, SCALE, TILE_WIDTH},
 };
 
 pub const BOMB: &str = "bomb";
@@ -68,10 +69,15 @@ fn space_to_set_bomb(
                     }
                 }
                 if is_not_exist && number.is_enough() {
+                    let bomb_transform = Transform {
+                        translation: one,
+                        scale: Vec3::splat(SCALE),
+                        ..Default::default()
+                    };
                     commands
                         .spawn(SpriteSheetBundle {
                             texture_atlas: bomb_texture_atlas.0.clone(),
-                            transform: Transform::from_translation(one),
+                            transform: bomb_transform,
                             ..Default::default()
                         })
                         .with(Bomb {
@@ -135,14 +141,15 @@ fn bomb_trigger(
     for (entity, mut bomb, power, transform) in query.iter_mut() {
         let translation = transform.translation;
         if bomb.timer.tick(time.delta_seconds()).finished() {
+            let fire_transform = Transform {
+                translation: Vec3::new(translation.x, translation.y, OBJECT_LAYER),
+                scale: Vec3::splat(SCALE),
+                ..Default::default()
+            };
             commands
                 .spawn(SpriteSheetBundle {
                     texture_atlas: fire_texture_atlas.0.clone(),
-                    transform: Transform::from_translation(Vec3::new(
-                        translation.x,
-                        translation.y,
-                        OBJECT_LAYER,
-                    )),
+                    transform: fire_transform,
                     sprite: TextureAtlasSprite::new(8),
                     ..Default::default()
                 })
@@ -180,11 +187,16 @@ fn ember_trigger(
                     }
                     if up {
                         let index = if i == (power as f32) { 4 } else { 5 };
+                        let ember_transform = Transform {
+                            translation: position,
+                            scale: Vec3::splat(SCALE),
+                            ..Default::default()
+                        };
                         commands
                             .spawn(SpriteSheetBundle {
                                 texture_atlas: fire_texture_atlas.0.clone(),
                                 sprite: TextureAtlasSprite::new(index),
-                                transform: Transform::from_translation(position),
+                                transform: ember_transform,
                                 ..Default::default()
                             })
                             .with(Fire::ember())
@@ -202,11 +214,16 @@ fn ember_trigger(
                     }
                     if down {
                         let index = if i == (power as f32) { 6 } else { 5 };
+                        let ember_transform = Transform {
+                            translation: position,
+                            scale: Vec3::splat(SCALE),
+                            ..Default::default()
+                        };
                         commands
                             .spawn(SpriteSheetBundle {
                                 texture_atlas: fire_texture_atlas.0.clone(),
                                 sprite: TextureAtlasSprite::new(index),
-                                transform: Transform::from_translation(position),
+                                transform: ember_transform,
                                 ..Default::default()
                             })
                             .with(Fire::ember())
@@ -224,11 +241,16 @@ fn ember_trigger(
                     }
                     if left {
                         let index = if i == (power as f32) { 0 } else { 1 };
+                        let ember_transform = Transform {
+                            translation: position,
+                            scale: Vec3::splat(SCALE),
+                            ..Default::default()
+                        };
                         commands
                             .spawn(SpriteSheetBundle {
                                 texture_atlas: fire_texture_atlas.0.clone(),
                                 sprite: TextureAtlasSprite::new(index),
-                                transform: Transform::from_translation(position),
+                                transform: ember_transform,
                                 ..Default::default()
                             })
                             .with(Fire::ember())
@@ -246,11 +268,16 @@ fn ember_trigger(
                     }
                     if right {
                         let index = if i == (power as f32) { 3 } else { 1 };
+                        let ember_transform = Transform {
+                            translation: position,
+                            scale: Vec3::splat(SCALE),
+                            ..Default::default()
+                        };
                         commands
                             .spawn(SpriteSheetBundle {
                                 texture_atlas: fire_texture_atlas.0.clone(),
                                 sprite: TextureAtlasSprite::new(index),
-                                transform: Transform::from_translation(position),
+                                transform: ember_transform,
                                 ..Default::default()
                             })
                             .with(Fire::ember())
@@ -408,6 +435,18 @@ fn bomb_destruction(
                             ..Default::default()
                         })
                         .with(Buff::BombNumberBuff)
+                        .with(InGame);
+                }
+                Destructable::Portal => {
+                    commands.despawn(entity);
+                    commands
+                        .spawn(SpriteBundle {
+                            material: power_buff_material.0.clone(),
+                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
+                            transform: Transform::from_translation(position),
+                            ..Default::default()
+                        })
+                        .with(Portal)
                         .with(InGame);
                 }
             }

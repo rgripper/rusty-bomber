@@ -49,19 +49,31 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let player_texture_handle = asset_server.load("chars/sample_character_01.png");
+    let player_texture_handle = asset_server.load("player.png");
     let player_texture_atlas =
-        TextureAtlas::from_grid(player_texture_handle, Vec2::new(16.0, 32.0), 4, 3);
+        TextureAtlas::from_grid(player_texture_handle, Vec2::new(16.0, 16.0), 14, 4);
     let bomb_texture_handle = asset_server.load("bomb.png");
     let bomb_texture_atlas =
         TextureAtlas::from_grid(bomb_texture_handle, Vec2::new(16.0, 16.0), 3, 1);
     let fire_texture_handle = asset_server.load("fire.png");
     let fire_texture_atlas =
         TextureAtlas::from_grid(fire_texture_handle, Vec2::new(16.0, 16.0), 4, 3);
+    let floor_or_wall_texture_handle = asset_server.load("wall.png");
+    let floor_or_wall_texture_atlas =
+        TextureAtlas::from_grid(floor_or_wall_texture_handle, Vec2::new(16.0, 16.0), 6, 1);
+    let creature_texture_handle = asset_server.load("creature.png");
+    let creature_texture_atlas =
+        TextureAtlas::from_grid(creature_texture_handle, Vec2::new(16.0, 16.0), 14, 1);
 
     commands
         // cameras
-        .spawn(Camera2dBundle::default())
+        .spawn(Camera2dBundle {
+            transform: Transform {
+                translation: Vec3::new(300.0, 300.0, 20.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
         .spawn(CameraUiBundle::default())
         .insert_resource(PermaWallMaterial(
             materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
@@ -80,6 +92,12 @@ fn setup(
         ))
         .insert_resource(BombTextureAtlas(texture_atlases.add(bomb_texture_atlas)))
         .insert_resource(FireTextureAtlas(texture_atlases.add(fire_texture_atlas)))
+        .insert_resource(FloorOrWallTextureAtlas(
+            texture_atlases.add(floor_or_wall_texture_atlas),
+        ))
+        .insert_resource(CreatureTextureAtlas(
+            texture_atlases.add(creature_texture_atlas),
+        ))
         .insert_resource(CreatureMaterial(
             materials.add(Color::rgb(1.0, 0.3, 0.5).into()),
         ))
