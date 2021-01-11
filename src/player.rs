@@ -41,7 +41,7 @@ impl Default for PlayerBundle {
             direction: Direction::Right,
             velocity: Velocity {
                 current: 0.0,
-                max: 2.0,
+                max: 5.0,
             },
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
@@ -58,7 +58,7 @@ fn position_to_translation(
         transform.translation = Vec3::new(position.x, position.y, position.z);
     }
 }
-pub fn player_movement(
+fn player_movement(
     mut query: Query<(&Velocity, &Direction, &mut PlayerPosition), With<Player>>,
     wall_pos_query: Query<&Transform, With<Wall>>,
 ) {
@@ -74,7 +74,7 @@ pub fn player_movement(
     }
 }
 
-pub fn change_direction(
+fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Direction, &mut Velocity), With<Player>>,
 ) {
@@ -194,7 +194,6 @@ fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec2 {
 // animate
 fn animate_player(
     time: Res<Time>,
-    // texture_atlases: Res<Assets<TextureAtlas>>,
     mut query: Query<(
         &mut Animation,
         &mut TextureAtlasSprite,
@@ -235,6 +234,6 @@ fn velocity_to_animation(
     mut query: Query<(&Velocity, &mut Animation), (With<Player>, Changed<Velocity>)>,
 ) {
     for (velocity, mut animation) in query.iter_mut() {
-        animation.0.set_duration(1.0 / velocity.max * 0.5);
+        animation.0.set_duration(1.0 / velocity.max * 4.0);
     }
 }
