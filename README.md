@@ -15,7 +15,7 @@ then point your browser to http://127.0.0.1:4000/
 
 ## Build and run native version
 ```
-cargo make run
+cargo run --features native
 ```
 ## Spritesheet
 bomb_party_v4.png
