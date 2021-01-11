@@ -41,7 +41,7 @@ impl Default for PlayerBundle {
             direction: Direction::Right,
             velocity: Velocity {
                 current: 0.0,
-                max: 1.0,
+                max: 2.0,
             },
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
