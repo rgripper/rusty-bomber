@@ -11,6 +11,7 @@ pub struct BombTextureAtlas(pub Handle<TextureAtlas>);
 pub struct FireTextureAtlas(pub Handle<TextureAtlas>);
 pub struct FloorOrWallTextureAtlas(pub Handle<TextureAtlas>);
 pub struct CreatureTextureAtlas(pub Handle<TextureAtlas>);
+pub struct PortalTextureAtlas(pub Handle<TextureAtlas>);
 pub struct PowerBuffMaterial(pub Handle<ColorMaterial>);
 
 pub struct SpeedBuffMaterial(pub Handle<ColorMaterial>);

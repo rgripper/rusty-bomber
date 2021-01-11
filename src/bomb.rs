@@ -2,17 +2,16 @@ use bevy::prelude::*;
 
 use crate::{
     assets::{
-        BombNumberBuffMaterial, BombTextureAtlas, FireTextureAtlas, PowerBuffMaterial,
-        SpeedBuffMaterial,
+        BombNumberBuffMaterial, BombTextureAtlas, FireTextureAtlas, PortalTextureAtlas,
+        PowerBuffMaterial, SpeedBuffMaterial,
     },
     components::{
         Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Ember, Fire, InGame, Player,
-        PlayerPosition, Wall, FIRE_ANIMATE_TIME,
+        PlayerPosition, Portal, Stop, Wall, FIRE_ANIMATE_TIME,
     },
     constants::OBJECT_LAYER,
     creatures::Creature,
     events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
-    portal::Portal,
     state::RunState,
     utils::{aabb_detection, vecs_xy_intersect, SCALE, TILE_WIDTH},
 };
@@ -43,7 +42,10 @@ fn space_to_set_bomb(
     runstate: Res<RunState>,
     keyboard_input: Res<Input<KeyCode>>,
     bomb_position: Query<&Transform, With<Bomb>>,
-    mut player_query: Query<(&PlayerPosition, &BombPower, &mut BombNumber), With<Player>>,
+    mut player_query: Query<
+        (&PlayerPosition, &BombPower, &mut BombNumber),
+        (With<Player>, Without<Stop>),
+    >,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         if let Some(entity) = runstate.player {
@@ -384,6 +386,7 @@ fn bomb_destruction(
     fire_query: Query<&Transform, With<Fire>>,
     power_buff_material: Res<PowerBuffMaterial>,
     speed_buff_material: Res<SpeedBuffMaterial>,
+    portal_texture_atlas: Res<PortalTextureAtlas>,
     bomb_number_buff_material: Res<BombNumberBuffMaterial>,
 ) {
     for (entity, transform, destructable) in destructable_wall_query.iter() {
@@ -439,11 +442,15 @@ fn bomb_destruction(
                 }
                 Destructable::Portal => {
                     commands.despawn(entity);
+
                     commands
-                        .spawn(SpriteBundle {
-                            material: power_buff_material.0.clone(),
-                            sprite: Sprite::new(Vec2::new(TILE_WIDTH as f32, TILE_WIDTH as f32)),
-                            transform: Transform::from_translation(position),
+                        .spawn(SpriteSheetBundle {
+                            texture_atlas: portal_texture_atlas.0.clone(),
+                            transform: Transform {
+                                translation: position,
+                                scale: Vec3::splat(SCALE),
+                                ..Default::default()
+                            },
                             ..Default::default()
                         })
                         .with(Portal)

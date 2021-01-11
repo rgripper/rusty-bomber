@@ -20,7 +20,22 @@ cargo make run
 ## Spritesheet
 bomb_party_v4.png
 
-Made by [usr_share](https://opengameart.org/users/usrshare) at
+Made by 
+most: [usr_share](https://opengameart.org/users/usrshare) at
 https://opengameart.org/content/bomb-party-the-complete-set
 
-License: [CC 3.0](https://creativecommons.org/licenses/by/3.0/)
+door: [awesomeduck](https://opengameart.org/users/awesomeduck) at
+https://opengameart.org/content/wall-door-tileset
+
+speed icon: [antum_deluge](https://opengameart.org/users/antumdeluge) at 
+https://opengameart.org/content/cc0-footgear-icons
+
+power icon: [victordelima](https://opengameart.org/users/victordelima) at
+https://opengameart.org/content/16-bit-rpg-potion-pack
+
+bomb icon: [sprite_attack](https://opengameart.org/users/spriteattack) at
+https://opengameart.org/content/emotional-explosives
+
+License: 
+[CC 3.0](https://creativecommons.org/licenses/by/3.0/)
+[CC 1.0](https://creativecommons.org/publicdomain/zero/1.0/)

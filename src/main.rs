@@ -77,6 +77,9 @@ fn setup(
     let creature_texture_handle = asset_server.load("creature.png");
     let creature_texture_atlas =
         TextureAtlas::from_grid(creature_texture_handle, Vec2::new(16.0, 16.0), 14, 1);
+    let portal_texture_handle = asset_server.load("door.png");
+    let portal_texture_atlas =
+        TextureAtlas::from_grid(portal_texture_handle, Vec2::new(16.0, 16.0), 2, 1);
 
     commands
         // cameras
@@ -97,6 +100,9 @@ fn setup(
         ))
         .insert_resource(BombTextureAtlas(texture_atlases.add(bomb_texture_atlas)))
         .insert_resource(FireTextureAtlas(texture_atlases.add(fire_texture_atlas)))
+        .insert_resource(PortalTextureAtlas(
+            texture_atlases.add(portal_texture_atlas),
+        ))
         .insert_resource(FloorOrWallTextureAtlas(
             texture_atlases.add(floor_or_wall_texture_atlas),
         ))
@@ -104,13 +110,13 @@ fn setup(
             texture_atlases.add(creature_texture_atlas),
         ))
         .insert_resource(PowerBuffMaterial(
-            materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
+            materials.add(asset_server.load("power_icon.png").into()),
         ))
         .insert_resource(SpeedBuffMaterial(
-            materials.add(Color::rgb(0.0, 1.0, 1.0).into()),
+            materials.add(asset_server.load("speed_icon.png").into()),
         ))
         .insert_resource(BombNumberBuffMaterial(
-            materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
+            materials.add(asset_server.load("bomb_icon.png").into()),
         ))
         .insert_resource(LifeMaterial(
             materials.add(Color::rgb(1.0, 0.0, 0.0).into()),

@@ -1,8 +1,9 @@
 use crate::{
-    components::{Direction, Player, PlayerPosition, Velocity, Wall},
+    components::{Direction, Player, PlayerPosition, Stop, Velocity, Wall},
     constants::PLAYER_LAYER,
     events::*,
     player::move_or_turn,
+    ui::DrawBlinkTimer,
     utils::vecs_xy_intersect,
 };
 use bevy::prelude::*;
@@ -79,21 +80,47 @@ impl CreatureSystems for SystemStage {
     fn creature_systems(&mut self) -> &mut Self {
         self.add_system(creature_player_collision.system())
             .add_system(creature_movement.system())
+            .add_system(despawn_player.system())
     }
 }
 
 fn creature_player_collision(
-    mut player_query: Query<&mut PlayerPosition, With<Player>>,
+    commands: &mut Commands,
+    mut player_query: Query<(Entity, &mut PlayerPosition), With<Player>>,
     mut creature_query: Query<&mut Transform, With<Creature>>,
     mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
-    for player in player_query.iter_mut() {
+    for (entity, player) in player_query.iter_mut() {
         let player_pos = &player.truncate();
         for creature_transform in creature_query.iter_mut() {
             if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
+                commands.insert(entity, StopAndFlashing::default());
                 game_over_events.send(GameOverEvent(GameOverType::Defeat));
                 // TODO: stop the game (stop movement system?)
             }
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct StopAndFlashing(Stop, DrawBlinkTimer, Timer);
+impl Default for StopAndFlashing {
+    fn default() -> Self {
+        Self(
+            Stop,
+            DrawBlinkTimer(Timer::from_seconds(0.2, true)),//TODO:Slow here
+            Timer::from_seconds(3.0, false),
+        )
+    }
+}
+fn despawn_player(
+    commands: &mut Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Timer), (With<Stop>, With<DrawBlinkTimer>)>,
+) {
+    for (entity, mut timer) in query.iter_mut() {
+        if timer.tick(time.delta_seconds()).just_finished() {
+            commands.despawn_recursive(entity);
         }
     }
 }

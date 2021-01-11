@@ -30,6 +30,8 @@ pub enum Destructable {
 }
 pub struct MaxAndCurrent(i32, i32);
 pub struct Player;
+pub struct Portal;
+pub struct Stop;
 pub struct Velocity {
     pub max: f32,
     pub current: f32,

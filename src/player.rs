@@ -1,6 +1,6 @@
 use crate::{
     components::{
-        Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition,
+        Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition, Stop,
         Velocity, Wall,
     },
     constants::PLAYER_LAYER,
@@ -19,6 +19,7 @@ impl PlayerSystems for SystemStage {
             .add_system(player_movement.system())
             .add_system(change_direction.system())
             .add_system(position_to_translation.system())
+            .add_system(stop_player.system())
             // animate
             .add_system(animate_player.system())
             .add_system(velocity_to_animation.system())
@@ -76,7 +77,7 @@ fn player_movement(
 
 fn change_direction(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Velocity), With<Player>>,
+    mut query: Query<(&mut Direction, &mut Velocity), (With<Player>, Without<Stop>)>,
 ) {
     for (mut direction, mut velocity) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
@@ -235,5 +236,10 @@ fn velocity_to_animation(
 ) {
     for (velocity, mut animation) in query.iter_mut() {
         animation.0.set_duration(1.0 / velocity.max * 4.0);
+    }
+}
+fn stop_player(mut query: Query<&mut Velocity, With<Stop>>) {
+    for mut velocity in query.iter_mut() {
+        velocity.current = 0.0;
     }
 }
