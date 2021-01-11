@@ -2,16 +2,13 @@ use assets::*;
 use bevy::prelude::*;
 use errors::error_handler;
 use events::{GameOverEvent, RecoveryBombNumberEvent};
-use portal::PortalMaterial;
-use resources::Map;
+use resources::{Map, MAX_HEIGHT, MAX_WIDTH};
 use state::*;
 use state_jumper::jump_state;
 use ui::{draw_blink_system, ButtonMaterials};
-
-use creatures::*;
+use utils::TILE_WIDTH;
 
 pub mod assets;
-
 pub mod bomb;
 pub mod buff;
 pub mod components;
@@ -29,9 +26,25 @@ pub mod ui;
 pub mod utils;
 
 fn main() {
-    App::build()
-        .add_plugins(DefaultPlugins)
-        .add_resource(Map::first())
+    let mut app = App::build();
+    app.add_resource(Msaa { samples: 4 })
+        .add_resource(WindowDescriptor {
+            title: "BomberMan".to_string(),
+            width: MAX_WIDTH,
+            height: MAX_HEIGHT,
+            resizable: true,
+            // mode: window::WindowMode::Fullscreen {use_size: false},
+            mode: bevy::window::WindowMode::Windowed,
+            #[cfg(target_arch = "wasm32")]
+            canvas: Some("#bevy-canvas".to_string()),
+            //vsync: true,
+            ..Default::default()
+        });
+    #[cfg(not(target_arch = "wasm32"))]
+    app.add_plugins(DefaultPlugins);
+    #[cfg(target_arch = "wasm32")]
+    app.add_plugins(bevy_webgl2::DefaultPlugins);
+    app.add_resource(Map::first())
         .init_resource::<ButtonMaterials>()
         .add_event::<RecoveryBombNumberEvent>()
         .add_event::<GameOverEvent>()
@@ -69,24 +82,16 @@ fn setup(
         // cameras
         .spawn(Camera2dBundle {
             transform: Transform {
-                translation: Vec3::new(300.0, 300.0, 20.0),
+                translation: Vec3::new(
+                    (MAX_WIDTH - TILE_WIDTH) / 2.0,
+                    (MAX_HEIGHT - TILE_WIDTH) / 2.0,
+                    20.0,
+                ),
                 ..Default::default()
             },
             ..Default::default()
         })
         .spawn(CameraUiBundle::default())
-        .insert_resource(PermaWallMaterial(
-            materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        ))
-        .insert_resource(DestructableWallMaterial(
-            materials.add(Color::rgb(1.0, 1.0, 0.7).into()),
-        ))
-        .insert_resource(PortalMaterial(
-            materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-        ))
-        .insert_resource(FloorMaterial(
-            materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
-        ))
         .insert_resource(PlayerTextureAtlas(
             texture_atlases.add(player_texture_atlas),
         ))
@@ -97,9 +102,6 @@ fn setup(
         ))
         .insert_resource(CreatureTextureAtlas(
             texture_atlases.add(creature_texture_atlas),
-        ))
-        .insert_resource(CreatureMaterial(
-            materials.add(Color::rgb(1.0, 0.3, 0.5).into()),
         ))
         .insert_resource(PowerBuffMaterial(
             materials.add(Color::rgb(1.0, 0.0, 1.0).into()),

@@ -3,7 +3,7 @@ use crate::{
         Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition,
         Velocity, Wall,
     },
-    constants::{FIXED_DISTANCE, PLAYER_LAYER},
+    constants::PLAYER_LAYER,
     utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 
@@ -55,7 +55,7 @@ fn position_to_translation(
     mut query: Query<(&PlayerPosition, &mut Transform), Changed<PlayerPosition>>,
 ) {
     for (position, mut transform) in query.iter_mut() {
-        transform.translation = Vec3::new(position.x, position.y + FIXED_DISTANCE, position.z);
+        transform.translation = Vec3::new(position.x, position.y, position.z);
     }
 }
 pub fn player_movement(

@@ -9,7 +9,7 @@ use crate::{
         Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Ember, Fire, InGame, Player,
         PlayerPosition, Wall, FIRE_ANIMATE_TIME,
     },
-    constants::{FIXED_DISTANCE, OBJECT_LAYER},
+    constants::OBJECT_LAYER,
     creatures::Creature,
     events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
     portal::Portal,
@@ -58,7 +58,7 @@ fn space_to_set_bomb(
                     }
                 }
                 let number_x = position.x / TILE_WIDTH;
-                let number_y = (position.y - FIXED_DISTANCE) / TILE_WIDTH;
+                let number_y = position.y / TILE_WIDTH;
                 let one = Vec3::new(handle(number_x), handle(number_y), OBJECT_LAYER);
 
                 let mut is_not_exist = true;
@@ -116,7 +116,7 @@ fn animate_fire(
     mut query: Query<(&mut Animation, &mut TextureAtlasSprite), With<Fire>>,
 ) {
     for (mut animation, mut sprite) in query.iter_mut() {
-        info!("index:{}", sprite.index);
+        //info!("index:{}", sprite.index);
         // 9 10 11 3
         animation.0.tick(time.delta_seconds());
         if animation.0.just_finished() {
@@ -321,7 +321,7 @@ fn bomb_block_player(
     for (entity, bomb_position) in bomb_query.iter() {
         for player_position in player_query.iter() {
             let x = player_position.translation.x;
-            let y = player_position.translation.y - FIXED_DISTANCE;
+            let y = player_position.translation.y;
             if !aabb_detection(x, y, bomb_position.translation) {
                 commands.insert_one(entity, Wall);
             }

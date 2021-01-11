@@ -138,7 +138,7 @@ pub fn spawn_game_ui(
     mut materials: ResMut<Assets<ColorMaterial>>,
     runstate: Res<RunState>,
 ) {
-    if let Some(player) = runstate.player {
+    if let Some(_player) = runstate.player {
         commands
             // speed value
             .spawn(NodeBundle {
@@ -254,7 +254,7 @@ pub fn spawn_game_ui(
     }
 }
 
-pub fn setting_ui(commands: &mut Commands, runstate: ResMut<RunState>) {}
+//pub fn setting_ui(commands: &mut Commands, runstate: ResMut<RunState>) {}
 
 pub fn pause_menu(
     commands: &mut Commands,

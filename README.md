@@ -1,3 +1,22 @@
+## Prerequisites
+
+```
+cargo install cargo-make
+```
+```
+rustup target add wasm32-unknown-unknown
+```
+
+## Build and serve WASM version
+```
+cargo make serve
+```
+then point your browser to http://127.0.0.1:4000/
+
+## Build and run native version
+```
+cargo make run
+```
 ## Spritesheet
 bomb_party_v4.png
 

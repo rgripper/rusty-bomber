@@ -1,6 +1,10 @@
+use crate::utils::TILE_WIDTH;
+
 pub struct Map {
     value: Vec<Vec<i32>>,
 }
+pub const MAX_HEIGHT: f32 = 11.0 * TILE_WIDTH;
+pub const MAX_WIDTH: f32 = 13.0 * TILE_WIDTH;
 impl Map {
     pub fn first() -> Self {
         let room_map = vec![
