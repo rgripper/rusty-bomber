@@ -17,7 +17,9 @@ native = [
   "bevy/bevy_wgpu",
   "bevy/dynamic"
 ]
-
+native-release = [
+  "bevy/bevy_wgpu",
+]
 web = [
   "bevy_webgl2"
 ]

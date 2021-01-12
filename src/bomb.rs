@@ -451,6 +451,7 @@ fn bomb_destruction(
                                 scale: Vec3::splat(SCALE),
                                 ..Default::default()
                             },
+                            sprite: TextureAtlasSprite::new(1),
                             ..Default::default()
                         })
                         .with(Portal)

@@ -108,7 +108,7 @@ impl Default for StopAndFlashing {
     fn default() -> Self {
         Self(
             Stop,
-            DrawBlinkTimer(Timer::from_seconds(0.2, true)),//TODO:Slow here
+            DrawBlinkTimer(Timer::from_seconds(0.2, true)), //TODO:Slow here
             Timer::from_seconds(3.0, false),
         )
     }

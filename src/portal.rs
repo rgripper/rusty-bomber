@@ -25,7 +25,7 @@ fn portal_player_collision(
         let player_pos = &player.truncate();
         for (portal_transform, mut sprite_index) in portal_query.iter_mut() {
             if vecs_xy_intersect(&portal_transform.translation.truncate(), player_pos) {
-                sprite_index.index = 1;
+                sprite_index.index = 0;
                 commands.insert_one(entity, Stop);
                 game_over_events.send(GameOverEvent(GameOverType::Victory));
                 // TODO: stop the game (stop movement system?)
