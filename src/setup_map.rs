@@ -1,6 +1,6 @@
 use crate::{
     assets::*,
-    components::{Destructable, InGame, PlayerPosition, Wall, Way},
+    components::{Destructible, InGame, Wall, Way},
     constants::{FLOOR_LAYER, OBJECT_LAYER, PLAYER_LAYER},
     creatures::CreatureBundle,
     player::PlayerBundle,
@@ -76,7 +76,7 @@ pub fn setup_map(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable::NormalBox)
+                        .with(Destructible::NormalBox)
                         .with(InGame);
                 }
                 // When setting each level, the player’s position should be set flexibly
@@ -96,15 +96,18 @@ pub fn setup_map(
                     let player = commands
                         .spawn(SpriteSheetBundle {
                             texture_atlas: player_texture_atlas.0.clone(),
-                            transform: Transform::from_scale(Vec3::splat(SCALE)),
+                            transform: Transform {
+                                translation: Vec3::new(
+                                    TILE_WIDTH * col_index as f32,
+                                    TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                    PLAYER_LAYER,
+                                ),
+                                scale: Vec3::splat(SCALE),
+                                ..Default::default()
+                            },
                             ..Default::default()
                         })
                         .with_bundle(PlayerBundle::default())
-                        .with(PlayerPosition::from(Vec3::new(
-                            TILE_WIDTH * col_index as f32,
-                            TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
-                            PLAYER_LAYER,
-                        )))
                         .with(InGame)
                         .current_entity();
                     runstate.player = player;
@@ -128,7 +131,7 @@ pub fn setup_map(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable::BombNumberBuffBox)
+                        .with(Destructible::BombNumberBuffBox)
                         .with(InGame);
                 }
                 5 => {
@@ -150,7 +153,7 @@ pub fn setup_map(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable::PowerBuffBox)
+                        .with(Destructible::PowerBuffBox)
                         .with(InGame);
                 }
                 6 => {
@@ -172,7 +175,7 @@ pub fn setup_map(
                             ..Default::default()
                         })
                         .with(Wall)
-                        .with(Destructable::SpeedBuffBox)
+                        .with(Destructible::SpeedBuffBox)
                         .with(InGame);
                 }
                 7 => {
@@ -225,7 +228,7 @@ pub fn setup_map(
                             sprite: TextureAtlasSprite::new(3),
                             ..Default::default()
                         })
-                        .with(Destructable::Portal)
+                        .with(Destructible::Portal)
                         .with(Wall)
                         .with(InGame);
                 }

@@ -1,6 +1,6 @@
 use crate::{
     components::{
-        Animation, BombNumber, BombPower, Direction, Player, PlayerAnimation, PlayerPosition, Stop,
+        Animation, BombNumber, BombPower, Destructible, Direction, Player, PlayerAnimation, Stop,
         Velocity, Wall,
     },
     constants::PLAYER_LAYER,
@@ -18,7 +18,6 @@ impl PlayerSystems for SystemStage {
             // movement
             .add_system(player_movement.system())
             .add_system(change_direction.system())
-            .add_system(position_to_translation.system())
             .add_system(stop_player.system())
             // animate
             .add_system(animate_player.system())
@@ -33,6 +32,7 @@ pub struct PlayerBundle {
     bomb_power: BombPower,
     bomb_number: BombNumber,
     animation: Animation,
+    destructible: Destructible,
 }
 
 impl Default for PlayerBundle {
@@ -47,29 +47,24 @@ impl Default for PlayerBundle {
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
             animation: Animation(Timer::from_seconds(1.0, true)),
+            destructible: Destructible::Player,
         }
     }
 }
 
 // movement
-fn position_to_translation(
-    mut query: Query<(&PlayerPosition, &mut Transform), Changed<PlayerPosition>>,
-) {
-    for (position, mut transform) in query.iter_mut() {
-        transform.translation = Vec3::new(position.x, position.y, position.z);
-    }
-}
 fn player_movement(
-    mut query: Query<(&Velocity, &Direction, &mut PlayerPosition), With<Player>>,
+    mut query: Query<(&Velocity, &Direction, &mut Transform), With<Player>>,
     wall_pos_query: Query<&Transform, With<Wall>>,
 ) {
-    for (_, direction, mut player_position) in query
+    for (_, direction, mut transform) in query
         .iter_mut()
         .filter(|(velocity, _, _)| velocity.current > 0.0)
     {
+        let player_position = transform.translation;
         if let Some(new_pos) = move_or_turn(&player_position.truncate(), direction, &wall_pos_query)
         {
-            player_position.0 = new_pos.extend(PLAYER_LAYER);
+            transform.translation = new_pos.extend(PLAYER_LAYER);
             // conversion from Vec2 to Vec3
         }
     }

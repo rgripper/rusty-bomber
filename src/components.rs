@@ -1,11 +1,4 @@
-use std::ops::Deref;
-
-use bevy::{
-    math::{Vec2, Vec3},
-    prelude::{Entity, Timer},
-};
-
-use crate::constants::PLAYER_LAYER;
+use bevy::prelude::{Entity, Timer};
 
 pub struct Wall;
 pub struct Way;
@@ -21,12 +14,14 @@ pub enum GameMode {
     SinglePlayer,
     MultiPlayer,
 }
-pub enum Destructable {
+pub enum Destructible {
     NormalBox,
     PowerBuffBox,
     SpeedBuffBox,
     BombNumberBuffBox,
     Portal,
+    Player,
+    Creature,
 }
 pub struct MaxAndCurrent(i32, i32);
 pub struct Player;
@@ -109,24 +104,5 @@ impl From<Direction> for PlayerAnimation {
             Direction::Right => PlayerAnimation::new(vec![4, 5, 6, 7]),
             Direction::Down => PlayerAnimation::new(vec![1, 2, 3]),
         }
-    }
-}
-
-pub struct PlayerPosition(pub Vec3);
-
-impl From<Vec3> for PlayerPosition {
-    fn from(v: Vec3) -> Self {
-        PlayerPosition(v)
-    }
-}
-impl From<Vec2> for PlayerPosition {
-    fn from(v: Vec2) -> Self {
-        PlayerPosition(v.extend(PLAYER_LAYER))
-    }
-}
-impl Deref for PlayerPosition {
-    type Target = Vec3;
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }

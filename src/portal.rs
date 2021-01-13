@@ -1,5 +1,5 @@
 use crate::{
-    components::{Player, PlayerPosition, Portal, Stop},
+    components::{Player, Portal, Stop},
     events::*,
     utils::vecs_xy_intersect,
 };
@@ -17,12 +17,12 @@ impl PortalSystems for SystemStage {
 
 fn portal_player_collision(
     commands: &mut Commands,
-    mut player_query: Query<(Entity, &mut PlayerPosition), With<Player>>,
+    mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     mut portal_query: Query<(&mut Transform, &mut TextureAtlasSprite), With<Portal>>,
     mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
-    for (entity, player) in player_query.iter_mut() {
-        let player_pos = &player.truncate();
+    for (entity, player_transform) in player_query.iter_mut() {
+        let player_pos = &player_transform.translation.truncate();
         for (portal_transform, mut sprite_index) in portal_query.iter_mut() {
             if vecs_xy_intersect(&portal_transform.translation.truncate(), player_pos) {
                 sprite_index.index = 0;

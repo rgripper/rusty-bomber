@@ -1,5 +1,5 @@
 use crate::{
-    components::{Direction, Player, PlayerPosition, Stop, Velocity, Wall},
+    components::{Destructible, Direction, Player, Stop, Velocity, Wall},
     constants::PLAYER_LAYER,
     events::*,
     player::move_or_turn,
@@ -18,6 +18,7 @@ pub struct CreatureBundle {
     creature: Creature,
     direction: Direction,
     velocity: Velocity,
+    destructible: Destructible,
 }
 
 impl Default for CreatureBundle {
@@ -29,6 +30,7 @@ impl Default for CreatureBundle {
                 current: 0.0,
                 max: 1.0,
             },
+            destructible: Destructible::Creature,
         }
     }
 }
@@ -86,12 +88,12 @@ impl CreatureSystems for SystemStage {
 
 fn creature_player_collision(
     commands: &mut Commands,
-    mut player_query: Query<(Entity, &mut PlayerPosition), With<Player>>,
+    mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     mut creature_query: Query<&mut Transform, With<Creature>>,
     mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
-    for (entity, player) in player_query.iter_mut() {
-        let player_pos = &player.truncate();
+    for (entity, player_transform) in player_query.iter_mut() {
+        let player_pos = &player_transform.translation.truncate();
         for creature_transform in creature_query.iter_mut() {
             if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
                 commands.insert(entity, StopAndFlashing::default());

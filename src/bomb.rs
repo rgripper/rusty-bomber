@@ -6,14 +6,14 @@ use crate::{
         PowerBuffMaterial, SpeedBuffMaterial,
     },
     components::{
-        Animation, Bomb, BombNumber, BombPower, Buff, Destructable, Ember, Fire, InGame, Player,
-        PlayerPosition, Portal, Stop, Wall, FIRE_ANIMATE_TIME,
+        Animation, Bomb, BombNumber, BombPower, Buff, Destructible, Ember, Fire, InGame, Player,
+        Portal, Stop, Wall, FIRE_ANIMATE_TIME,
     },
     constants::OBJECT_LAYER,
-    creatures::Creature,
     events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
+    resources::Map,
     state::RunState,
-    utils::{aabb_detection, vecs_xy_intersect, SCALE, TILE_WIDTH},
+    utils::{aabb_detection, SCALE, TILE_WIDTH},
 };
 
 pub const BOMB: &str = "bomb";
@@ -28,8 +28,6 @@ impl BombSystems for SystemStage {
             .add_system(despawn_fire.system())
             .add_system(bomb_block_player.system())
             .add_system(bomb_destruction.system())
-            .add_system(bomb_player.system())
-            .add_system(bomb_creature.system())
             .add_system(animate_bomb.system())
             .add_system(animate_fire.system())
             .add_system(ember_trigger.system())
@@ -43,13 +41,14 @@ fn space_to_set_bomb(
     keyboard_input: Res<Input<KeyCode>>,
     bomb_position: Query<&Transform, With<Bomb>>,
     mut player_query: Query<
-        (&PlayerPosition, &BombPower, &mut BombNumber),
+        (&Transform, &BombPower, &mut BombNumber),
         (With<Player>, Without<Stop>),
     >,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         if let Some(entity) = runstate.player {
-            for (position, power, mut number) in player_query.iter_mut() {
+            for (transform, power, mut number) in player_query.iter_mut() {
+                let position = transform.translation;
                 fn handle(n: f32) -> f32 {
                     let a = n.floor();
                     let b = n.fract();
@@ -168,9 +167,9 @@ fn bomb_trigger(
 fn ember_trigger(
     commands: &mut Commands,
     time: Res<Time>,
+    map: Res<Map>,
     fire_texture_atlas: Res<FireTextureAtlas>,
     mut fire_query: Query<(&Transform, &mut Ember)>,
-    wall_query: Query<&Transform, (With<Wall>, Without<Bomb>, Without<Destructable>)>,
 ) {
     for (transform, mut ember) in fire_query.iter_mut() {
         let power = ember.1;
@@ -182,10 +181,19 @@ fn ember_trigger(
                 if up {
                     let position =
                         Vec3::new(translation.x, translation.y + i * TILE_WIDTH, OBJECT_LAYER);
-                    for wall in wall_query.iter() {
-                        if aabb_detection(wall.translation.x, wall.translation.y, position) {
+                    // 9 and 1
+                    let x = position.x / TILE_WIDTH;
+                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.map_value().get(y as usize) {
+                        if let Some(&value) = rows.get(x as usize) {
+                            if value == 9 || value == 1 {
+                                up = false;
+                            }
+                        } else {
                             up = false;
                         }
+                    } else {
+                        up = false;
                     }
                     if up {
                         let index = if i == (power as f32) { 4 } else { 5 };
@@ -209,10 +217,19 @@ fn ember_trigger(
                 if down {
                     let position =
                         Vec3::new(translation.x, translation.y - i * TILE_WIDTH, OBJECT_LAYER);
-                    for wall in wall_query.iter() {
-                        if aabb_detection(wall.translation.x, wall.translation.y, position) {
+                    // 9 and 1
+                    let x = position.x / TILE_WIDTH;
+                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.map_value().get(y as usize) {
+                        if let Some(&value) = rows.get(x as usize) {
+                            if value == 9 || value == 1 {
+                                down = false;
+                            }
+                        } else {
                             down = false;
                         }
+                    } else {
+                        down = false;
                     }
                     if down {
                         let index = if i == (power as f32) { 6 } else { 5 };
@@ -236,11 +253,21 @@ fn ember_trigger(
                 if left {
                     let position =
                         Vec3::new(translation.x - i * TILE_WIDTH, translation.y, OBJECT_LAYER);
-                    for wall in wall_query.iter() {
-                        if aabb_detection(wall.translation.x, wall.translation.y, position) {
+                    // 9 and 1
+                    let x = position.x / TILE_WIDTH;
+                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.map_value().get(y as usize) {
+                        if let Some(&value) = rows.get(x as usize) {
+                            if value == 9 || value == 1 {
+                                left = false;
+                            }
+                        } else {
                             left = false;
                         }
+                    } else {
+                        left = false;
                     }
+
                     if left {
                         let index = if i == (power as f32) { 0 } else { 1 };
                         let ember_transform = Transform {
@@ -263,10 +290,19 @@ fn ember_trigger(
                 if right {
                     let position =
                         Vec3::new(translation.x + i * TILE_WIDTH, translation.y, OBJECT_LAYER);
-                    for wall in wall_query.iter() {
-                        if aabb_detection(wall.translation.x, wall.translation.y, position) {
+                    // 9 and 1
+                    let x = position.x / TILE_WIDTH;
+                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.map_value().get(y as usize) {
+                        if let Some(&value) = rows.get(x as usize) {
+                            if value == 9 || value == 1 {
+                                right = false;
+                            }
+                        } else {
                             right = false;
                         }
+                    } else {
+                        right = false;
                     }
                     if right {
                         let index = if i == (power as f32) { 3 } else { 1 };
@@ -331,63 +367,15 @@ fn bomb_block_player(
     }
 }
 
-// TODO: refactor to be `bomb_unit`
-fn bomb_player(
-    commands: &mut Commands,
-    query: Query<(Entity, &PlayerPosition)>,
-    runstate: Res<RunState>,
-    mut game_over_events: ResMut<Events<GameOverEvent>>,
-    fire_query: Query<&Transform, With<Fire>>,
-) {
-    let mut should_send_game_over = false;
-    for (entity, position) in query.iter() {
-        let mut need_destroy = false;
-        'fire: for fire in fire_query.iter() {
-            if aabb_detection(fire.translation.x, fire.translation.y, position.0) {
-                need_destroy = true;
-                break 'fire;
-            }
-        }
-        if need_destroy {
-            if let Some(player) = runstate.player {
-                if player == entity {
-                    should_send_game_over = true;
-                }
-            }
-            commands.despawn(entity);
-        }
-    }
-    if should_send_game_over {
-        game_over_events.send(GameOverEvent(GameOverType::Defeat));
-    }
-}
-
-// TODO: refactor to be `bomb_unit`
-fn bomb_creature(
-    commands: &mut Commands,
-    query: Query<(Entity, &Transform), With<Creature>>,
-    fire_query: Query<&Transform, With<Fire>>,
-) {
-    for (entity, position) in query.iter() {
-        if fire_query.iter().any(|fire| {
-            vecs_xy_intersect(
-                &fire.translation.truncate(),
-                &position.translation.truncate(),
-            )
-        }) {
-            commands.despawn(entity);
-        }
-    }
-}
-
 fn bomb_destruction(
     commands: &mut Commands,
-    destructable_wall_query: Query<(Entity, &Transform, &Destructable), With<Destructable>>,
+    destructable_wall_query: Query<(Entity, &Transform, &Destructible), With<Destructible>>,
     fire_query: Query<&Transform, With<Fire>>,
     power_buff_material: Res<PowerBuffMaterial>,
     speed_buff_material: Res<SpeedBuffMaterial>,
     portal_texture_atlas: Res<PortalTextureAtlas>,
     bomb_number_buff_material: Res<BombNumberBuffMaterial>,
+    mut game_over_events: ResMut<Events<GameOverEvent>>,
 ) {
     for (entity, transform, destructable) in destructable_wall_query.iter() {
         let position = transform.translation;
@@ -401,10 +389,10 @@ fn bomb_destruction(
 
         if need_destroy {
             match destructable {
-                Destructable::NormalBox => {
+                Destructible::NormalBox => {
                     commands.despawn(entity);
                 }
-                Destructable::PowerBuffBox => {
+                Destructible::PowerBuffBox => {
                     commands.despawn(entity);
                     commands
                         .spawn(SpriteBundle {
@@ -416,7 +404,7 @@ fn bomb_destruction(
                         .with(Buff::PowerBuff)
                         .with(InGame);
                 }
-                Destructable::SpeedBuffBox => {
+                Destructible::SpeedBuffBox => {
                     commands.despawn(entity);
                     commands
                         .spawn(SpriteBundle {
@@ -428,7 +416,7 @@ fn bomb_destruction(
                         .with(Buff::SpeedBuff)
                         .with(InGame);
                 }
-                Destructable::BombNumberBuffBox => {
+                Destructible::BombNumberBuffBox => {
                     commands.despawn(entity);
                     commands
                         .spawn(SpriteBundle {
@@ -440,7 +428,7 @@ fn bomb_destruction(
                         .with(Buff::BombNumberBuff)
                         .with(InGame);
                 }
-                Destructable::Portal => {
+                Destructible::Portal => {
                     commands.despawn(entity);
 
                     commands
@@ -456,6 +444,15 @@ fn bomb_destruction(
                         })
                         .with(Portal)
                         .with(InGame);
+                }
+                Destructible::Player => {
+                    commands.despawn(entity);
+
+                    game_over_events.send(GameOverEvent(GameOverType::Defeat));
+                }
+                Destructible::Creature => {
+                    commands.despawn(entity);
+                    info!("Destroy a creature!");
                 }
             }
         }
