@@ -6,7 +6,7 @@ use crate::{
     player::PlayerBundle,
     resources::Map,
     state::RunState,
-    utils::{SCALE, TILE_WIDTH},
+    utils::{index_to_position, SCALE, TILE_WIDTH},
 };
 use bevy::prelude::*;
 
@@ -14,32 +14,22 @@ pub const GMAE_SETUP: &str = "game_setup";
 
 pub fn setup_map(
     commands: &mut Commands,
-    map_resource: Res<Map>,
+    room_map: Res<Map>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_or_wall_texture_atlas: Res<FloorOrWallTextureAtlas>,
     creature_texture_atlas: Res<CreatureTextureAtlas>,
     mut runstate: ResMut<RunState>,
 ) {
-    let room_map = map_resource.map_value();
-
     for (row_index, row) in room_map.iter().enumerate() {
         for (col_index, cell) in row.iter().enumerate() {
             // Using match here makes it easier to extend the map
             let wall_transform = Transform {
-                translation: Vec3::new(
-                    TILE_WIDTH * col_index as f32,
-                    TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
-                    OBJECT_LAYER,
-                ),
+                translation: index_to_position(col_index, row_index, room_map.len(), OBJECT_LAYER),
                 scale: Vec3::splat(SCALE),
                 ..Default::default()
             };
             let way_transform = Transform {
-                translation: Vec3::new(
-                    TILE_WIDTH * col_index as f32,
-                    TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
-                    FLOOR_LAYER,
-                ),
+                translation: index_to_position(col_index, row_index, room_map.len(), FLOOR_LAYER),
                 scale: Vec3::splat(SCALE),
                 ..Default::default()
             };
@@ -97,11 +87,13 @@ pub fn setup_map(
                         .spawn(SpriteSheetBundle {
                             texture_atlas: player_texture_atlas.0.clone(),
                             transform: Transform {
-                                translation: Vec3::new(
-                                    TILE_WIDTH * col_index as f32,
-                                    TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                                translation: index_to_position(
+                                    col_index,
+                                    row_index,
+                                    room_map.len(),
                                     PLAYER_LAYER,
                                 ),
+
                                 scale: Vec3::splat(SCALE),
                                 ..Default::default()
                             },
@@ -191,9 +183,10 @@ pub fn setup_map(
                         .with(InGame);
                     // creature
                     let creature_transform = Transform {
-                        translation: Vec3::new(
-                            TILE_WIDTH * col_index as f32,
-                            TILE_WIDTH * (room_map.len() - row_index - 1) as f32,
+                        translation: index_to_position(
+                            col_index,
+                            row_index,
+                            room_map.len(),
                             PLAYER_LAYER,
                         ),
                         scale: Vec3::splat(SCALE),

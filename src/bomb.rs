@@ -183,8 +183,8 @@ fn ember_trigger(
                         Vec3::new(translation.x, translation.y + i * TILE_WIDTH, OBJECT_LAYER);
                     // 9 and 1
                     let x = position.x / TILE_WIDTH;
-                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
-                    if let Some(rows) = map.map_value().get(y as usize) {
+                    let y = map.len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.get(y as usize) {
                         if let Some(&value) = rows.get(x as usize) {
                             if value == 9 || value == 1 {
                                 up = false;
@@ -219,8 +219,8 @@ fn ember_trigger(
                         Vec3::new(translation.x, translation.y - i * TILE_WIDTH, OBJECT_LAYER);
                     // 9 and 1
                     let x = position.x / TILE_WIDTH;
-                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
-                    if let Some(rows) = map.map_value().get(y as usize) {
+                    let y = map.len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.get(y as usize) {
                         if let Some(&value) = rows.get(x as usize) {
                             if value == 9 || value == 1 {
                                 down = false;
@@ -255,8 +255,8 @@ fn ember_trigger(
                         Vec3::new(translation.x - i * TILE_WIDTH, translation.y, OBJECT_LAYER);
                     // 9 and 1
                     let x = position.x / TILE_WIDTH;
-                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
-                    if let Some(rows) = map.map_value().get(y as usize) {
+                    let y = map.len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.get(y as usize) {
                         if let Some(&value) = rows.get(x as usize) {
                             if value == 9 || value == 1 {
                                 left = false;
@@ -292,8 +292,8 @@ fn ember_trigger(
                         Vec3::new(translation.x + i * TILE_WIDTH, translation.y, OBJECT_LAYER);
                     // 9 and 1
                     let x = position.x / TILE_WIDTH;
-                    let y = map.map_value().len() as f32 - (position.y / TILE_WIDTH + 1.0);
-                    if let Some(rows) = map.map_value().get(y as usize) {
+                    let y = map.len() as f32 - (position.y / TILE_WIDTH + 1.0);
+                    if let Some(rows) = map.get(y as usize) {
                         if let Some(&value) = rows.get(x as usize) {
                             if value == 9 || value == 1 {
                                 right = false;

@@ -1348,6 +1348,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_webgl2",
+ "once_cell",
  "rand",
  "winit",
 ]
