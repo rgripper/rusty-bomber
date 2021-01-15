@@ -90,14 +90,14 @@ fn creature_player_collision(
     commands: &mut Commands,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     mut creature_query: Query<&mut Transform, With<Creature>>,
-    mut game_over_events: ResMut<Events<GameOverEvent>>,
+    mut game_over_events: ResMut<Events<GameEvents>>,
 ) {
     for (entity, player_transform) in player_query.iter_mut() {
         let player_pos = &player_transform.translation.truncate();
         for creature_transform in creature_query.iter_mut() {
             if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
                 commands.insert(entity, StopAndFlashing::default());
-                game_over_events.send(GameOverEvent(GameOverType::Defeat));
+                game_over_events.send(GameEvents::GameOver);
                 // TODO: stop the game (stop movement system?)
             }
         }

@@ -91,9 +91,9 @@ fn create_buff(
     commands: &mut Commands,
     translation: Vec3,
     material_handle: Handle<ColorMaterial>,
-    scale:f32
+    scale: f32,
 ) -> &mut Commands {
-    let transform = Transform{
+    let transform = Transform {
         translation,
         scale: Vec3::splat(scale),
         ..Default::default()
@@ -213,7 +213,7 @@ pub fn create_ember(
         (Direction::Left, false) | (Direction::Right, false) => 1,
         (Direction::Up, false) | (Direction::Down, false) => 5,
     };
-    let transform = create_transform(translation, OBJECT_LAYER+3.0);
+    let transform = create_transform(translation, OBJECT_LAYER + 3.0);
     create_sprite_sheet(commands, transform, texture_handle, index).with(Fire::ember());
 }
 pub fn create_center_fire(
@@ -222,7 +222,7 @@ pub fn create_center_fire(
     texture_handle: Handle<TextureAtlas>,
     power: i32,
 ) {
-    let transform = create_transform(translation, OBJECT_LAYER+3.0);
+    let transform = create_transform(translation, OBJECT_LAYER + 3.0);
     create_sprite_sheet(commands, transform, texture_handle, 8).with_bundle(FireBundle::new(power));
 }
 
@@ -231,21 +231,21 @@ pub fn create_power_buff(
     translation: Vec3,
     material_handle: Handle<ColorMaterial>,
 ) {
-    create_buff(commands, translation, material_handle,1.0).with(Buff::PowerBuff);
+    create_buff(commands, translation, material_handle, 1.0).with(Buff::PowerBuff);
 }
 pub fn create_speed_buff(
     commands: &mut Commands,
     translation: Vec3,
     material_handle: Handle<ColorMaterial>,
 ) {
-    create_buff(commands, translation, material_handle,0.95).with(Buff::SpeedBuff);
+    create_buff(commands, translation, material_handle, 0.95).with(Buff::SpeedBuff);
 }
 pub fn create_bomb_number_buff(
     commands: &mut Commands,
     translation: Vec3,
     material_handle: Handle<ColorMaterial>,
 ) {
-    create_buff(commands, translation, material_handle,1.25).with(Buff::BombNumberBuff);
+    create_buff(commands, translation, material_handle, 1.25).with(Buff::BombNumberBuff);
 }
 pub fn create_portal(
     commands: &mut Commands,

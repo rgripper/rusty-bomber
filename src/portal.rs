@@ -19,7 +19,7 @@ fn portal_player_collision(
     commands: &mut Commands,
     mut player_query: Query<(Entity, &mut Transform), With<Player>>,
     mut portal_query: Query<(&mut Transform, &mut TextureAtlasSprite), With<Portal>>,
-    mut game_over_events: ResMut<Events<GameOverEvent>>,
+    mut victory_events: ResMut<Events<GameEvents>>,
 ) {
     for (entity, player_transform) in player_query.iter_mut() {
         let player_pos = &player_transform.translation.truncate();
@@ -27,7 +27,7 @@ fn portal_player_collision(
             if vecs_xy_intersect(&portal_transform.translation.truncate(), player_pos) {
                 sprite_index.index = 0;
                 commands.insert_one(entity, Stop);
-                game_over_events.send(GameOverEvent(GameOverType::Victory));
+                victory_events.send(GameEvents::Victory);
                 // TODO: stop the game (stop movement system?)
             }
         }

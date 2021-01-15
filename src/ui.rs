@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     components::InGame,
     constants::START_SPEED,
+    resources::Map,
     state::{AppState, GameState, RunState},
 };
 
@@ -339,6 +340,65 @@ pub fn gameover_menu(
                     },
                     text: Text {
                         value: "enter".to_string(),
+                        font: runstate.font_handle.clone(),
+                        style: TextStyle {
+                            font_size: 50.0,
+                            color: Color::rgb_u8(0x88, 0x22, 0x22),
+                            ..Default::default()
+                        },
+                    },
+                    ..Default::default()
+                })
+                .with(DrawBlinkTimer(Timer::from_seconds(0.5, true)));
+        });
+}
+pub fn game_victory(
+    commands: &mut Commands,
+    runstate: ResMut<RunState>,
+    map: Res<Map>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::ColumnReverse,
+                ..Default::default()
+            },
+            material: materials.add(Color::NONE.into()),
+            ..Default::default()
+        })
+        .with(WillDestroy)
+        .with(InGame)
+        .with_children(|parent| {
+            parent
+                .spawn(TextBundle {
+                    style: Style {
+                        ..Default::default()
+                    },
+                    text: Text {
+                        value: "Victory".to_string(),
+                        font: runstate.font_handle.clone(),
+                        style: TextStyle {
+                            font_size: 100.0,
+                            color: Color::rgb_u8(0xAA, 0x22, 0x22),
+                            ..Default::default()
+                        },
+                    },
+                    ..Default::default()
+                })
+                .spawn(TextBundle {
+                    style: Style {
+                        ..Default::default()
+                    },
+                    text: Text {
+                        value: if !map.is_final {
+                            "next level".to_string()
+                        } else {
+                            "All clear!Enter to random level.".to_string()
+                        },
                         font: runstate.font_handle.clone(),
                         style: TextStyle {
                             font_size: 50.0,

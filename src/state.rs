@@ -5,17 +5,17 @@ use crate::{
     buff::BuffSystems,
     components::InGame,
     creatures::CreatureSystems,
-    events::GameOverEvent,
     player::PlayerSystems,
     portal::PortalSystems,
     setup_map::setup_map,
-    ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
+    ui::{button_system, game_victory, gameover_menu, pause_menu, start_menu, WillDestroy},
 };
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppState {
     StartMenu,
     Game,
+    Temporary,
 }
 const APP_STATE_STAGE: &str = "app_state";
 pub struct AppStatePluge;
@@ -44,11 +44,15 @@ impl Plugin for AppStatePluge {
                             .buff_systems()
                             .creature_systems()
                             .portal_systems()
-                            .add_system(game_over_events.system())
                     })
                     .on_state_exit(AppState::Game, exit_game_despawn.system())
+                    .on_state_enter(AppState::Temporary, jump_game.system())
             });
     }
+}
+fn jump_game(mut app_state: ResMut<State<AppState>>
+) {
+    app_state.set_next(AppState::Game).unwrap();
 }
 fn exit_ui_despawn(commands: &mut Commands, query: Query<Entity, With<WillDestroy>>) {
     for entity in query.iter() {
@@ -74,6 +78,7 @@ pub enum GameState {
     Game,
     Pause,
     GameOver,
+    Victory,
 }
 const GAME_STATE_STAGE: &str = "game_state";
 pub struct GameStatePlugin;
@@ -92,6 +97,8 @@ impl Plugin for GameStatePlugin {
                     .on_state_exit(GameState::Pause, exit_game_ui_despawn.system())
                     .on_state_enter(GameState::GameOver, gameover_menu.system())
                     .on_state_exit(GameState::GameOver, exit_game_ui_despawn.system())
+                    .on_state_enter(GameState::Victory, game_victory.system())
+                    .on_state_exit(GameState::Victory, exit_game_ui_despawn.system())
             });
     }
 }
@@ -108,25 +115,6 @@ impl RunState {
             player: None,
             font_handle: asset_server.load("fonts/FiraMono-Medium.ttf"),
             level: None,
-        }
-    }
-}
-
-fn game_over_events(
-    events: Res<Events<GameOverEvent>>,
-    mut reader: Local<EventReader<GameOverEvent>>,
-    mut game_state: ResMut<State<GameState>>,
-) {
-    for _ in reader.iter(&events) {
-        match game_state.current() {
-            GameState::GameOver => {}
-            _ => match game_state.set_next(GameState::GameOver) {
-                Ok(_) => {
-                    info!("Game Over!");
-                    break;
-                }
-                Err(err) => error!("{}", err),
-            },
         }
     }
 }

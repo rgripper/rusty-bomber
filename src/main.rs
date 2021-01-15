@@ -1,10 +1,9 @@
 use assets::*;
 use bevy::prelude::*;
 use errors::error_handler;
-use events::{GameOverEvent, RecoveryBombNumberEvent};
+use events::{game_events_handle, jump_state, GameEvents};
 use resources::{Map, MAX_HEIGHT, MAX_WIDTH};
 use state::*;
-use state_jumper::jump_state;
 use ui::{draw_blink_system, ButtonMaterials};
 use utils::TILE_WIDTH;
 
@@ -22,7 +21,6 @@ pub mod portal;
 pub mod resources;
 pub mod setup_map;
 pub mod state;
-pub mod state_jumper;
 pub mod ui;
 pub mod utils;
 
@@ -47,12 +45,12 @@ fn main() {
     app.add_plugins(bevy_webgl2::DefaultPlugins);
     app.add_resource(Map::first())
         .init_resource::<ButtonMaterials>()
-        .add_event::<RecoveryBombNumberEvent>()
-        .add_event::<GameOverEvent>()
+        .add_event::<GameEvents>()
         .add_plugin(AppStatePluge)
         .add_plugin(GameStatePlugin)
         .add_startup_system(setup.system())
         .add_system(draw_blink_system.system())
+        .add_system(game_events_handle.system().chain(error_handler.system()))
         .add_system(jump_state.system().chain(error_handler.system()))
         .run();
 }

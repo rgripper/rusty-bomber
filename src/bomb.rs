@@ -13,7 +13,7 @@ use crate::{
         create_bomb, create_bomb_number_buff, create_center_fire, create_ember, create_portal,
         create_power_buff, create_speed_buff,
     },
-    events::{GameOverEvent, GameOverType, RecoveryBombNumberEvent},
+    events::GameEvents,
     resources::Map,
     state::RunState,
     utils::{aabb_detection, TILE_WIDTH},
@@ -27,7 +27,6 @@ impl BombSystems for SystemStage {
     fn bomb_systems(&mut self) -> &mut Self {
         self.add_system(space_to_set_bomb.system())
             .add_system(bomb_trigger.system())
-            .add_system(recovery_bomb_number.system())
             .add_system(despawn_fire.system())
             .add_system(bomb_block_player.system())
             .add_system(bomb_destruction.system())
@@ -156,7 +155,7 @@ fn bomb_trigger(
     time: Res<Time>,
     mut query: Query<(Entity, &mut Bomb, &BombPower, &Transform)>,
     fire_texture_atlas: Res<FireTextureAtlas>,
-    mut recovery_bomb_number_events: ResMut<Events<RecoveryBombNumberEvent>>,
+    mut recovery_bomb_number_events: ResMut<Events<GameEvents>>,
 ) {
     for (entity, mut bomb, power, transform) in query.iter_mut() {
         let translation = transform.translation;
@@ -168,7 +167,7 @@ fn bomb_trigger(
                 power.0,
             );
             commands.despawn(entity);
-            recovery_bomb_number_events.send(RecoveryBombNumberEvent(bomb.player));
+            recovery_bomb_number_events.send(GameEvents::RecoveryBombNumber(bomb.player));
         }
     }
 }
@@ -299,23 +298,6 @@ fn ember_trigger(
         }
     }
 }
-fn recovery_bomb_number(
-    recovery_bomb_number_events: Res<Events<RecoveryBombNumberEvent>>,
-    mut events_reader: Local<EventReader<RecoveryBombNumberEvent>>,
-    mut player_query: Query<(Entity, &mut BombNumber), With<Player>>,
-) {
-    for entity in events_reader.iter(&recovery_bomb_number_events) {
-        let entity = entity.0;
-        'bomb_number: for (player, mut number) in player_query.iter_mut() {
-            if entity == player {
-                number.current -= 1;
-                // info!("current:{}", number.current);
-                // info!("max:{}", number.max);
-                break 'bomb_number;
-            }
-        }
-    }
-}
 
 fn despawn_fire(commands: &mut Commands, time: Res<Time>, mut query: Query<(Entity, &mut Fire)>) {
     for (entity, mut fire) in query.iter_mut() {
@@ -348,7 +330,7 @@ fn bomb_destruction(
     speed_buff_material: Res<SpeedBuffMaterial>,
     portal_texture_atlas: Res<PortalTextureAtlas>,
     bomb_number_buff_material: Res<BombNumberBuffMaterial>,
-    mut game_over_events: ResMut<Events<GameOverEvent>>,
+    mut game_over_events: ResMut<Events<GameEvents>>,
 ) {
     for (entity, transform, destructable) in destructable_wall_query.iter() {
         let position = transform.translation;
@@ -388,7 +370,7 @@ fn bomb_destruction(
                 Destructible::Player => {
                     commands.despawn(entity);
 
-                    game_over_events.send(GameOverEvent(GameOverType::Defeat));
+                    game_over_events.send(GameEvents::GameOver);
                 }
                 Destructible::Creature => {
                     commands.despawn(entity);
