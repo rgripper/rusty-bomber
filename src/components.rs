@@ -31,15 +31,25 @@ pub struct Velocity {
     pub max: f32,
     pub current: f32,
 }
-
 pub struct Bomb {
     pub timer: Timer,
     pub player: Entity,
 }
 
+impl Default for Bomb {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(3.0, false),
+            player: Entity::new(0),
+        }
+    }
+}
+
 pub struct InGame;
 
+#[derive(Copy, Clone, PartialEq)]
 pub struct BombPower(pub i32);
+
 pub struct BombNumber {
     pub max: i32,
     pub current: i32,
