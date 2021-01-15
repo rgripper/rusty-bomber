@@ -50,8 +50,7 @@ impl Plugin for AppStatePluge {
             });
     }
 }
-fn jump_game(mut app_state: ResMut<State<AppState>>
-) {
+fn jump_game(mut app_state: ResMut<State<AppState>>) {
     app_state.set_next(AppState::Game).unwrap();
 }
 fn exit_ui_despawn(commands: &mut Commands, query: Query<Entity, With<WillDestroy>>) {
