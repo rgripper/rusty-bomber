@@ -41,5 +41,6 @@ pub fn jump_state(
             app_exit_events.send(AppExit);
         }
     }
+    //info!("app state:{:?} game state:{:?}",app_state.current(),game_state.current());
     return Ok(());
 }

@@ -30,3 +30,8 @@ anyhow = "1"
 bevy = {version="0.4", default-features=false}
 bevy_webgl2 = {version="0.4", optional=true}
 winit = "0.24"
+
+
+[profile.release]
+lto = true
+opt-level = 's'

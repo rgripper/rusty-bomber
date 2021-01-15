@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    constants::START_SPEED,
-    state::{AppState, GameState, RunState},
-};
+use crate::{components::InGame, constants::START_SPEED, state::{AppState, GameState, RunState}};
 
 pub struct DrawBlinkTimer(pub Timer);
 pub struct WillDestroy;
@@ -46,7 +43,7 @@ pub fn start_menu(
                 })
                 .spawn(ButtonBundle {
                     style: Style {
-                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        size: Size::new(Val::Percent(100.0), Val::Percent(8.0)),
                         // center button
                         margin: Rect::all(Val::Auto),
                         // horizontally center child text
@@ -86,9 +83,9 @@ impl FromResources for ButtonMaterials {
     fn from_resources(resources: &Resources) -> Self {
         let mut materials = resources.get_mut::<Assets<ColorMaterial>>().unwrap();
         ButtonMaterials {
-            normal: materials.add(Color::rgb(0.15, 0.15, 0.15).into()),
-            hovered: materials.add(Color::rgb(0.25, 0.25, 0.25).into()),
-            pressed: materials.add(Color::rgb(0.35, 0.75, 0.35).into()),
+            normal: materials.add(Color::rgba(0.15, 0.15, 0.15,0.0).into()),
+            hovered: materials.add(Color::rgba(0.25, 0.25, 0.25,0.51).into()),
+            pressed: materials.add(Color::rgba(0.35, 0.35, 0.35,0.21).into()),
         }
     }
 }
@@ -274,6 +271,7 @@ pub fn pause_menu(
             ..Default::default()
         })
         .with(WillDestroy)
+        .with(InGame)
         .with_children(|parent| {
             parent
                 .spawn(TextBundle {
@@ -313,6 +311,7 @@ pub fn gameover_menu(
             ..Default::default()
         })
         .with(WillDestroy)
+        .with(InGame)
         .with_children(|parent| {
             parent
                 .spawn(TextBundle {

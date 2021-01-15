@@ -6,7 +6,7 @@ use crate::{
     player::PlayerBundle,
     resources::Map,
     state::RunState,
-    utils::{index_to_position, SCALE, TILE_WIDTH},
+    utils::{index_to_position, SCALE},
 };
 use bevy::prelude::*;
 

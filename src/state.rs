@@ -12,7 +12,7 @@ use crate::{
     ui::{button_system, gameover_menu, pause_menu, start_menu, WillDestroy},
 };
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Debug)]
 pub enum AppState {
     StartMenu,
     Game,
@@ -55,12 +55,17 @@ fn exit_ui_despawn(commands: &mut Commands, query: Query<Entity, With<WillDestro
         commands.despawn_recursive(entity);
     }
 }
+fn exit_game_ui_despawn(commands: &mut Commands, query: Query<Entity, (With<WillDestroy>,With<InGame>)>) {
+    for entity in query.iter() {
+        commands.despawn_recursive(entity);
+    }
+}
 fn exit_game_despawn(commands: &mut Commands, query: Query<Entity, With<InGame>>) {
     for entity in query.iter() {
         commands.despawn_recursive(entity);
     }
 }
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq,Debug)]
 pub enum GameState {
     Invalid,
     Game,
@@ -81,9 +86,9 @@ impl Plugin for GameStatePlugin {
             .stage(GAME_STATE_STAGE, |stage: &mut StateStage<GameState>| {
                 stage
                     .on_state_enter(GameState::Pause, pause_menu.system())
-                    .on_state_exit(GameState::Pause, exit_ui_despawn.system())
+                    .on_state_exit(GameState::Pause, exit_game_ui_despawn.system())
                     .on_state_enter(GameState::GameOver, gameover_menu.system())
-                    .on_state_exit(GameState::GameOver, exit_ui_despawn.system())
+                    .on_state_exit(GameState::GameOver, exit_game_ui_despawn.system())
             });
     }
 }
