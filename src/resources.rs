@@ -38,5 +38,3 @@ impl DerefMut for Map {
         &mut self.value
     }
 }
-
-

@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{components::InGame, constants::START_SPEED, state::{AppState, GameState, RunState}};
+use crate::{
+    components::InGame,
+    constants::START_SPEED,
+    state::{AppState, GameState, RunState},
+};
 
 pub struct DrawBlinkTimer(pub Timer);
 pub struct WillDestroy;
@@ -83,9 +87,9 @@ impl FromResources for ButtonMaterials {
     fn from_resources(resources: &Resources) -> Self {
         let mut materials = resources.get_mut::<Assets<ColorMaterial>>().unwrap();
         ButtonMaterials {
-            normal: materials.add(Color::rgba(0.15, 0.15, 0.15,0.0).into()),
-            hovered: materials.add(Color::rgba(0.25, 0.25, 0.25,0.51).into()),
-            pressed: materials.add(Color::rgba(0.35, 0.35, 0.35,0.21).into()),
+            normal: materials.add(Color::rgba(0.15, 0.15, 0.15, 0.0).into()),
+            hovered: materials.add(Color::rgba(0.25, 0.25, 0.25, 0.51).into()),
+            pressed: materials.add(Color::rgba(0.35, 0.35, 0.35, 0.21).into()),
         }
     }
 }

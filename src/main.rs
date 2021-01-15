@@ -14,6 +14,7 @@ pub mod buff;
 pub mod components;
 pub mod constants;
 pub mod creatures;
+pub mod entitys;
 pub mod errors;
 pub mod events;
 pub mod player;

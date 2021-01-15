@@ -42,10 +42,6 @@ pub fn vecs_xy_intersect(first: &Vec2, second: &Vec2) -> bool {
         && second.y + TILE_WIDTH > first.y
 }
 #[inline(always)]
-pub fn index_to_position(x: usize, y: usize, len: usize, layer: f32) -> Vec3 {
-    Vec3::new(
-        TILE_WIDTH * x as f32,
-        TILE_WIDTH * (len - y - 1) as f32,
-        layer,
-    )
+pub fn index_to_position(x: usize, y: usize, len: usize) -> Vec2 {
+    Vec2::new(TILE_WIDTH * x as f32, TILE_WIDTH * (len - y - 1) as f32)
 }
