@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::physics::RapierConfiguration;
 
 use crate::{
     bomb::BombSystems,
@@ -61,7 +62,9 @@ fn exit_ui_despawn(commands: &mut Commands, query: Query<Entity, With<WillDestro
 fn exit_game_ui_despawn(
     commands: &mut Commands,
     query: Query<Entity, (With<WillDestroy>, With<InGame>)>,
+    mut configuration: ResMut<RapierConfiguration>,
 ) {
+    configuration.physics_pipeline_active = true;
     for entity in query.iter() {
         commands.despawn_recursive(entity);
     }

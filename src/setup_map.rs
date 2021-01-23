@@ -11,14 +11,12 @@ use crate::{
 };
 use bevy::prelude::*;
 
-pub const GMAE_SETUP: &str = "game_setup";
-
 pub fn setup_map(
     commands: &mut Commands,
     room_map: Res<Map>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_or_wall_texture_atlas: Res<FloorOrWallTextureAtlas>,
-    creature_texture_atlas: Res<CreatureTextureAtlas>,
+    //creature_texture_atlas: Res<CreatureTextureAtlas>,
     mut runstate: ResMut<RunState>,
 ) {
     for (row_index, row) in room_map.iter().enumerate() {
@@ -72,7 +70,7 @@ pub fn setup_map(
                         commands,
                         translation,
                         floor_or_wall_texture_atlas.0.clone(),
-                        creature_texture_atlas.0.clone(),
+                        player_texture_atlas.0.clone(), //TODO:creature_texture_atlas
                     );
                 }
                 8 => {

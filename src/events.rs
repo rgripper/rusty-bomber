@@ -5,6 +5,7 @@ use crate::{
 };
 use anyhow::Result;
 use bevy::{app::AppExit, prelude::*};
+use bevy_rapier2d::physics::RapierConfiguration;
 pub enum GameEvents {
     GameOver,
     Victory,
@@ -15,16 +16,23 @@ pub fn game_events_handle(
     mut events_reader: Local<EventReader<GameEvents>>,
     mut player_query: Query<(Entity, &mut BombNumber), With<Player>>,
     mut game_state: ResMut<State<GameState>>,
+    mut physics_state: ResMut<RapierConfiguration>,
 ) -> Result<()> {
     for event in events_reader.iter(&game_events) {
         match event {
             GameEvents::GameOver => match game_state.current() {
                 GameState::GameOver | GameState::Victory | GameState::Invalid => {}
-                _ => game_state.set_next(GameState::GameOver)?,
+                _ => {
+                    physics_state.physics_pipeline_active = false;
+                    game_state.set_next(GameState::GameOver)?
+                }
             },
             GameEvents::Victory => match game_state.current() {
                 GameState::GameOver | GameState::Victory | GameState::Invalid => {}
-                _ => game_state.set_next(GameState::Victory)?,
+                _ => {
+                    physics_state.physics_pipeline_active = false;
+                    game_state.set_next(GameState::Victory)?
+                }
             },
             GameEvents::RecoveryBombNumber(entity) => {
                 'bomb_number: for (player, mut number) in player_query.iter_mut() {

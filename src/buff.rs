@@ -5,8 +5,6 @@ use crate::{
     utils::aabb_detection,
 };
 
-pub const BUFF: &str = "BUFF";
-
 pub trait BuffSystems {
     fn buff_systems(&mut self) -> &mut Self;
 }
@@ -32,7 +30,7 @@ fn buffs(
                     }
                     Buff::SpeedBuff => {
                         // TODO:
-                        velocity.max *= 2.0;
+                        velocity.0 = (velocity.0 * 1.2).min(400.0);
                     }
                     Buff::BombNumberBuff => {
                         number.max += 1;

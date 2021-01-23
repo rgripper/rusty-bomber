@@ -1,13 +1,22 @@
 use crate::{
     components::{
-        Animation, BombNumber, BombPower, Destructible, Direction, Player, PlayerAnimation, Stop,
-        Velocity, Wall,
+        AnimateData, Animation, BombNumber, BombPower, Destructible, Direction, Player, Stop,
+        Velocity,
     },
-    constants::PLAYER_LAYER,
-    utils::{vecs_xy_intersect, TILE_WIDTH},
+    entitys::{create_dyn_rigid_body, create_player_collider},
+    errors::querr_error_handler,
 };
 
-use bevy::prelude::*;
+use anyhow::Result;
+use bevy::{ecs::QueryError, prelude::*};
+use bevy_rapier2d::{
+    na::Vector2,
+    physics::{ColliderHandleComponent, EventQueue, RigidBodyHandleComponent},
+    rapier::{
+        dynamics::{RigidBodyBuilder, RigidBodySet},
+        geometry::ColliderBuilder,
+    },
+};
 
 pub trait PlayerSystems {
     fn player_systems(&mut self) -> &mut Self;
@@ -16,9 +25,9 @@ impl PlayerSystems for SystemStage {
     fn player_systems(&mut self) -> &mut Self {
         self
             // movement
-            .add_system(player_movement.system())
-            .add_system(change_direction.system())
+            .add_system(movement.system().chain(querr_error_handler.system()))
             .add_system(stop_player.system())
+            .add_system(for_player_add_collision_detection.system())
             // animate
             .add_system(animate_player.system())
             .add_system(velocity_to_animation.system())
@@ -38,12 +47,9 @@ pub struct PlayerBundle {
 impl Default for PlayerBundle {
     fn default() -> Self {
         Self {
-            player: Player,
+            player: Player { is_moving: false },
             direction: Direction::Right,
-            velocity: Velocity {
-                current: 0.0,
-                max: 5.0,
-            },
+            velocity: Velocity(150.0),
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
             animation: Animation(Timer::from_seconds(1.0, true)),
@@ -51,157 +57,103 @@ impl Default for PlayerBundle {
         }
     }
 }
-
-// movement
-fn player_movement(
-    mut query: Query<(&Velocity, &Direction, &mut Transform), With<Player>>,
-    wall_pos_query: Query<&Transform, With<Wall>>,
+fn for_player_add_collision_detection(
+    commands: &mut Commands,
+    query: Query<
+        (Entity, &Transform),
+        (
+            With<Player>,
+            Without<RigidBodyBuilder>,
+            Without<ColliderBuilder>,
+            Without<RigidBodyHandleComponent>,
+            Without<ColliderHandleComponent>,
+        ),
+    >,
 ) {
-    for (_, direction, mut transform) in query
-        .iter_mut()
-        .filter(|(velocity, _, _)| velocity.current > 0.0)
-    {
-        let player_position = transform.translation;
-        if let Some(new_pos) = move_or_turn(&player_position.truncate(), direction, &wall_pos_query)
-        {
-            transform.translation = new_pos.extend(PLAYER_LAYER);
-            // conversion from Vec2 to Vec3
-        }
+    for (entity, transform) in query.iter() {
+        let translation = transform.translation;
+        commands.insert(
+            entity,
+            (
+                create_dyn_rigid_body(translation.x, translation.y),
+                create_player_collider(entity),
+            ),
+        );
     }
 }
 
-fn change_direction(
+fn movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Direction, &mut Velocity), (With<Player>, Without<Stop>)>,
-) {
-    for (mut direction, mut velocity) in query.iter_mut() {
+    mut query: Query<(Entity, &Velocity, &mut Direction, &mut Player), Without<Stop>>,
+    mut rigid_body_handle_query: Query<&mut RigidBodyHandleComponent>,
+    mut rigid_body_set: ResMut<RigidBodySet>,
+    events: Res<EventQueue>,
+) -> Result<(), QueryError> {
+    for (entity, velocity, mut direction, mut player) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
-            //println!("left");
+            //info!("left");
             Some(Direction::Left)
         } else if keyboard_input.pressed(KeyCode::Down) {
-            //println!("down");
+            //info!("down");
             Some(Direction::Down)
         } else if keyboard_input.pressed(KeyCode::Up) {
-            //println!("up");
+            //info!("up");
             Some(Direction::Up)
         } else if keyboard_input.pressed(KeyCode::Right) {
-            //println!("right");
+            //info!("right");
             Some(Direction::Right)
         } else {
             //println!("none");
             None
         };
 
-        if let Some(dir) = movement_action {
-            *direction = dir;
-            velocity.current = velocity.max;
+        let rigid_body_handle =
+            rigid_body_handle_query.get_component_mut::<RigidBodyHandleComponent>(entity)?;
+        let linvel = match movement_action {
+            Some(dir) => {
+                //info!("pre direction:{:?}",direction);
+                *direction = dir;
+                player.is_moving = true;
+                match dir {
+                    Direction::Left => Vector2::new(-velocity.0, 0.0),
+                    Direction::Up => Vector2::new(0.0, velocity.0),
+                    Direction::Right => Vector2::new(velocity.0, 0.0),
+                    Direction::Down => Vector2::new(0.0, -velocity.0),
+                }
+            }
+            None => {
+                player.is_moving = false;
+                Vector2::new(0.0, 0.0)
+            }
+        };
+        if let Some(rigid_body) = rigid_body_set.get_mut(rigid_body_handle.handle()) {
+            rigid_body.set_linvel(linvel, true);
         } else {
-            velocity.current = 0.0;
+            error!("Get rigid body fail!");
+        }
+        while let Ok(proximity_event) = events.proximity_events.pop() {
+            info!("Received proximity event: {:?}", proximity_event);
         }
     }
-}
-
-pub fn move_or_turn(
-    unit_pos: &Vec2,
-    direction: &Direction,
-    wall_pos_query: &Query<&Transform, With<Wall>>, // TODO: doesnt match destructible walls for some reaon
-) -> Option<Vec2> {
-    let velocity_vec = get_velocity_vec(direction, 2.0);
-
-    let new_unit_pos = *unit_pos + velocity_vec;
-    let maybe_wall = wall_pos_query.iter().find(|wall_tranform| {
-        vecs_xy_intersect(&new_unit_pos, &wall_tranform.translation.truncate())
-    });
-
-    match maybe_wall {
-        None => Some(new_unit_pos),
-        Some(wall_transform) => {
-            let (turn_point_1, turn_point_2, adjacent_cell_direction) =
-                get_turn_waypoints(direction, unit_pos, &wall_transform.translation.truncate());
-
-            let has_free_waypoints = wall_pos_query.iter().all(|other_wall_tranform| {
-                let other_wall_pos = &other_wall_tranform.translation.truncate();
-                !vecs_xy_intersect(&turn_point_1, other_wall_pos)
-                    && !vecs_xy_intersect(&turn_point_2, other_wall_pos)
-            });
-
-            if has_free_waypoints {
-                Some(*unit_pos + get_velocity_vec(&adjacent_cell_direction, 2.0))
-            } else {
-                None
-            }
-        }
-    }
-}
-
-fn get_turn_waypoints(
-    direction: &Direction,
-    unit_pos: &Vec2,
-    wall_pos: &Vec2,
-) -> (Vec2, Vec2, Direction) {
-    match direction {
-        Direction::Left | Direction::Right => {
-            let upper = wall_pos.y + TILE_WIDTH;
-            let lower = wall_pos.y - TILE_WIDTH;
-
-            if (upper - unit_pos.y) < (unit_pos.y - lower) {
-                (
-                    Vec2::new(unit_pos.x, upper),
-                    Vec2::new(wall_pos.x, upper),
-                    Direction::Up,
-                )
-            } else {
-                (
-                    Vec2::new(unit_pos.x, lower),
-                    Vec2::new(wall_pos.x, lower),
-                    Direction::Down,
-                )
-            }
-        }
-        Direction::Up | Direction::Down => {
-            let right = wall_pos.x + TILE_WIDTH;
-            let left = wall_pos.x - TILE_WIDTH;
-            if (right - unit_pos.x) < (unit_pos.x - left) {
-                (
-                    Vec2::new(right, unit_pos.y),
-                    Vec2::new(right, wall_pos.y),
-                    Direction::Right,
-                )
-            } else {
-                (
-                    Vec2::new(left, unit_pos.y),
-                    Vec2::new(left, wall_pos.y),
-                    Direction::Left,
-                )
-            }
-        }
-    }
-}
-
-fn get_velocity_vec(direction: &Direction, speed: f32) -> Vec2 {
-    match direction {
-        Direction::Left => Vec2::new(-speed, 0.0),
-        Direction::Up => Vec2::new(0.0, speed),
-        Direction::Right => Vec2::new(speed, 0.0),
-        Direction::Down => Vec2::new(0.0, -speed),
-    }
+    Ok(())
 }
 
 // animate
 fn animate_player(
     time: Res<Time>,
-    mut query: Query<(
-        &mut Animation,
-        &mut TextureAtlasSprite,
-        &Velocity,
-        &Direction,
-    )>,
+    animate_date: Res<AnimateData<Player>>,
+    mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Player, &Direction)>,
 ) {
     for (mut animation, mut sprite, _, direction) in query
         .iter_mut()
-        .filter(|(_, _, velocity, _)| velocity.current != 0.0)
+        .filter(|(_, _, player, _)| player.is_moving)
     {
-        let indexs = PlayerAnimation::from(*direction).indexs;
+        let indexs = match direction {
+            Direction::Left => &animate_date.left,
+            Direction::Up => &animate_date.up,
+            Direction::Right => &animate_date.right,
+            Direction::Down => &animate_date.down,
+        };
         let mut should_turn = true;
         'contatine: for &idx in indexs.iter() {
             if sprite.index == idx {
@@ -214,7 +166,12 @@ fn animate_player(
         }
         animation.0.tick(time.delta_seconds());
         if animation.0.just_finished() {
-            let indexs = PlayerAnimation::from(*direction).indexs;
+            let indexs = match direction {
+                Direction::Left => &animate_date.left,
+                Direction::Up => &animate_date.up,
+                Direction::Right => &animate_date.right,
+                Direction::Down => &animate_date.down,
+            };
             if sprite.index == indexs[0] {
                 sprite.index = indexs[1];
             } else if sprite.index == indexs[1] {
@@ -230,11 +187,11 @@ fn velocity_to_animation(
     mut query: Query<(&Velocity, &mut Animation), (With<Player>, Changed<Velocity>)>,
 ) {
     for (velocity, mut animation) in query.iter_mut() {
-        animation.0.set_duration(1.0 / velocity.max * 4.0);
+        animation.0.set_duration(1.0 / velocity.0 * 4.0);
     }
 }
-fn stop_player(mut query: Query<&mut Velocity, With<Stop>>) {
-    for mut velocity in query.iter_mut() {
-        velocity.current = 0.0;
+fn stop_player(mut query: Query<&mut Player, With<Stop>>) {
+    for mut player in query.iter_mut() {
+        player.is_moving = false;
     }
 }
