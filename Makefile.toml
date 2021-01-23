@@ -23,7 +23,7 @@ args = ["build", "--target", "wasm32-unknown-unknown", "--features", "web", "@@s
 command = "cargo"
 
 [tasks.build-web]
-args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "web", "--no-typescript", "${CARGO_WASM_PATH}"]
+args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "bundler", "--no-typescript", "${CARGO_WASM_PATH}"]
 command = "wasm-bindgen"
 dependencies = ["cargo-build-web", "wasm-bindgen-cli"]
 
