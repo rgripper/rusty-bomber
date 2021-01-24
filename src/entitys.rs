@@ -68,7 +68,7 @@ pub fn create_collider(entity: Entity) -> ColliderBuilder {
 const CREATURE_GROUPS: u16 = 0b0010;
 const PLAYER_GROUPS: u16 = 0b0001;
 const WALL_GROUPS: u16 = 0b0100;
-const FIRE_GROUPS: u16 = 0b1000;
+
 
 #[inline(always)]
 pub fn create_creature_collider(entity: Entity) -> ColliderBuilder {

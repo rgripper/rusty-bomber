@@ -11,7 +11,7 @@ use anyhow::Result;
 use bevy::{ecs::QueryError, prelude::*};
 use bevy_rapier2d::{
     na::Vector2,
-    physics::{ColliderHandleComponent, EventQueue, RigidBodyHandleComponent},
+    physics::{ColliderHandleComponent, RigidBodyHandleComponent},
     rapier::{
         dynamics::{RigidBodyBuilder, RigidBodySet},
         geometry::ColliderBuilder,

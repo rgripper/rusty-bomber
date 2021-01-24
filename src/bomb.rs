@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::renderer::RenderResource};
+use bevy::prelude::*;
 use bevy_rapier2d::{
     physics::{ColliderHandleComponent, RigidBodyHandleComponent},
     rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder},
@@ -340,8 +340,6 @@ fn bomb_block_player(
 ) {
     for (entity, bomb_position) in bomb_query.iter() {
         for player_position in player_query.iter() {
-            let x = player_position.translation.x;
-            let y = player_position.translation.y;
             if !vecs_xy_intersect(
                 &player_position.translation.truncate(),
                 &bomb_position.translation.truncate(),
