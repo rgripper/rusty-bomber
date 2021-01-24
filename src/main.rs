@@ -1,5 +1,12 @@
 use assets::*;
 use bevy::prelude::*;
+use bevy_rapier2d::{
+    physics::{RapierConfiguration, RapierPhysicsPlugin},
+    rapier::math::Vector,
+};
+
+use components::{AnimateIndexs, Player};
+use creatures::Creature;
 use errors::error_handler;
 use events::{game_events_handle, jump_state, GameEvents};
 use resources::{Map, MAX_HEIGHT, MAX_WIDTH};
@@ -45,22 +52,37 @@ fn main() {
     app.add_plugins(bevy_webgl2::DefaultPlugins);
     app.add_resource(Map::first())
         .init_resource::<ButtonMaterials>()
+        .add_resource(AnimateIndexs::<Player>::player4())
+        .add_resource(AnimateIndexs::<Creature>::player2())
         .add_event::<GameEvents>()
         .add_plugin(AppStatePluge)
         .add_plugin(GameStatePlugin)
+        .add_plugin(RapierPhysicsPlugin)
         .add_startup_system(setup.system())
         .add_system(draw_blink_system.system())
         .add_system(game_events_handle.system().chain(error_handler.system()))
         .add_system(jump_state.system().chain(error_handler.system()))
+        //.add_system(debug.system())
         .run();
 }
-
+// fn debug(
+//     configuration: Res<RapierConfiguration>,
+//     query: Query<&Transform, With<Player>>,
+// ) {
+//     info!("gravity:{}",configuration.gravity);
+//     for transform in query.iter() {
+//         info!("translation:{}",transform.translation)
+//     }
+// }
 fn setup(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut configuration: ResMut<RapierConfiguration>,
 ) {
+    configuration.gravity = Vector::y() * 0.0;
+    configuration.time_dependent_number_of_timesteps = true;
     let player_texture_handle = asset_server.load("player.png");
     let player_texture_atlas =
         TextureAtlas::from_grid(player_texture_handle, Vec2::new(16.0, 16.0), 14, 4);

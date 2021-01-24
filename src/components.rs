@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use bevy::prelude::{Entity, Timer};
 
 pub struct Wall;
@@ -14,6 +16,7 @@ pub enum GameMode {
     SinglePlayer,
     MultiPlayer,
 }
+#[derive(Debug)]
 pub enum Destructible {
     NormalBox,
     PowerBuffBox,
@@ -24,13 +27,13 @@ pub enum Destructible {
     Creature,
 }
 pub struct MaxAndCurrent(i32, i32);
-pub struct Player;
+pub struct Player {
+    pub is_moving: bool,
+}
 pub struct Portal;
 pub struct Stop;
-pub struct Velocity {
-    pub max: f32,
-    pub current: f32,
-}
+pub struct Velocity(pub f32);
+pub struct PlayerSensor;
 pub struct Bomb {
     pub timer: Timer,
     pub player: Entity,
@@ -80,7 +83,6 @@ impl Ember {
         Ember(Timer::from_seconds(EMBER_START_TIME, false), power)
     }
 }
-pub struct Dizziness(Timer, f32);
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Direction {
@@ -90,29 +92,65 @@ pub enum Direction {
     Down = 3,
 }
 pub const NEXT_PLAYER_SHEET: u32 = 14;
-pub struct PlayerAnimation {
-    pub indexs: Vec<u32>,
+
+pub struct AnimateIndexs<T> {
+    pub left: Vec<u32>,
+    pub right: Vec<u32>,
+    pub up: Vec<u32>,
+    pub down: Vec<u32>,
+    _mark: PhantomData<T>,
 }
-impl PlayerAnimation {
-    pub fn new(indexs: Vec<u32>) -> Self {
-        Self { indexs }
+impl<T> AnimateIndexs<T> {
+    pub fn player1() -> Self {
+        let left = vec![10, 11, 12, 13];
+        let right = vec![4, 5, 6, 7];
+        let up = vec![0, 8, 9];
+        let down = vec![1, 2, 3];
+        Self {
+            left,
+            right,
+            up,
+            down,
+            _mark: PhantomData::default(),
+        }
     }
-    pub fn next(self) -> Self {
-        Self::new(
-            self.indexs
-                .into_iter()
-                .map(|num| num + NEXT_PLAYER_SHEET)
-                .collect(),
-        )
+    pub fn player2() -> Self {
+        let left = vec![24, 25, 26, 27];
+        let right = vec![18, 19, 20, 21];
+        let up = vec![14, 22, 23];
+        let down = vec![15, 16, 17];
+        Self {
+            left,
+            right,
+            up,
+            down,
+            _mark: PhantomData::default(),
+        }
     }
-}
-impl From<Direction> for PlayerAnimation {
-    fn from(dir: Direction) -> Self {
-        match dir {
-            Direction::Left => PlayerAnimation::new(vec![10, 11, 12, 13]),
-            Direction::Up => PlayerAnimation::new(vec![0, 8, 9]),
-            Direction::Right => PlayerAnimation::new(vec![4, 5, 6, 7]),
-            Direction::Down => PlayerAnimation::new(vec![1, 2, 3]),
+    pub fn player3() -> Self {
+        let left = vec![38, 39, 40, 41];
+        let right = vec![32, 33, 34, 35];
+        let up = vec![28, 36, 37];
+        let down = vec![29, 30, 31];
+        Self {
+            left,
+            right,
+            up,
+            down,
+            _mark: PhantomData::default(),
+        }
+    }
+    pub fn player4() -> Self {
+        let left = vec![52, 53, 54, 55];
+        let right = vec![46, 47, 48, 49];
+        let up = vec![42, 50, 51];
+        let down = vec![43, 44, 45];
+        Self {
+            left,
+            right,
+            up,
+            down,
+            _mark: PhantomData::default(),
         }
     }
 }

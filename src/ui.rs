@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::physics::RapierConfiguration;
 
 use crate::{
     components::InGame,
@@ -262,7 +263,9 @@ pub fn pause_menu(
     commands: &mut Commands,
     runstate: ResMut<RunState>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut configuration: ResMut<RapierConfiguration>,
 ) {
+    configuration.physics_pipeline_active = false;
     commands
         .spawn(NodeBundle {
             style: Style {

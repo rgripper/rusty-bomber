@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use bevy_rapier2d::{
+    physics::{ColliderHandleComponent, RigidBodyHandleComponent},
+    rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder},
+};
 
 use crate::{
     assets::{
@@ -10,16 +14,15 @@ use crate::{
         Wall, FIRE_ANIMATE_TIME,
     },
     entitys::{
-        create_bomb, create_bomb_number_buff, create_center_fire, create_ember, create_portal,
-        create_power_buff, create_speed_buff,
+        create_bomb, create_bomb_number_buff, create_center_fire, create_collider, create_ember,
+        create_portal, create_power_buff, create_speed_buff, create_static_rigid_body,
     },
     events::GameEvents,
     resources::Map,
     state::RunState,
-    utils::{aabb_detection, TILE_WIDTH},
+    utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 
-pub const BOMB: &str = "bomb";
 pub trait BombSystems {
     fn bomb_systems(&mut self) -> &mut Self;
 }
@@ -33,6 +36,7 @@ impl BombSystems for SystemStage {
             .add_system(animate_bomb.system())
             .add_system(animate_fire.system())
             .add_system(ember_trigger.system())
+            .add_system(for_wall_add_collision_detection.system())
     }
 }
 
@@ -54,7 +58,30 @@ impl BombBunble {
         }
     }
 }
-
+fn for_wall_add_collision_detection(
+    commands: &mut Commands,
+    query: Query<
+        (Entity, &Transform),
+        (
+            With<Wall>,
+            Without<RigidBodyBuilder>,
+            Without<ColliderBuilder>,
+            Without<RigidBodyHandleComponent>,
+            Without<ColliderHandleComponent>,
+        ),
+    >,
+) {
+    for (entity, transform) in query.iter() {
+        let translation = transform.translation;
+        commands.insert(
+            entity,
+            (
+                create_static_rigid_body(translation.x, translation.y),
+                create_collider(entity),
+            ),
+        );
+    }
+}
 fn space_to_set_bomb(
     commands: &mut Commands,
     bomb_texture_atlas: Res<BombTextureAtlas>,
@@ -313,9 +340,10 @@ fn bomb_block_player(
 ) {
     for (entity, bomb_position) in bomb_query.iter() {
         for player_position in player_query.iter() {
-            let x = player_position.translation.x;
-            let y = player_position.translation.y;
-            if !aabb_detection(x, y, bomb_position.translation) {
+            if !vecs_xy_intersect(
+                &player_position.translation.truncate(),
+                &bomb_position.translation.truncate(),
+            ) {
                 commands.insert_one(entity, Wall);
             }
         }
@@ -336,7 +364,7 @@ fn bomb_destruction(
         let position = transform.translation;
         let mut need_destroy = false;
         'fire: for fire in fire_query.iter() {
-            if aabb_detection(fire.translation.x, fire.translation.y, position) {
+            if vecs_xy_intersect(&fire.translation.truncate(), &position.truncate()) {
                 need_destroy = true;
                 break 'fire;
             }

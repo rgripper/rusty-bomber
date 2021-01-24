@@ -1,5 +1,6 @@
 use crate::{
     assets::*,
+    components::{AnimateIndexs, Player},
     entitys::{
         create_bomb_number_buff_box, create_creature, create_green_way, create_last_wall,
         create_normal_box, create_normal_wall, create_player, create_portal_box,
@@ -11,14 +12,13 @@ use crate::{
 };
 use bevy::prelude::*;
 
-pub const GMAE_SETUP: &str = "game_setup";
-
 pub fn setup_map(
     commands: &mut Commands,
     room_map: Res<Map>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_or_wall_texture_atlas: Res<FloorOrWallTextureAtlas>,
-    creature_texture_atlas: Res<CreatureTextureAtlas>,
+    player_animate_indexs: Res<AnimateIndexs<Player>>,
+    //creature_texture_atlas: Res<CreatureTextureAtlas>,
     mut runstate: ResMut<RunState>,
 ) {
     for (row_index, row) in room_map.iter().enumerate() {
@@ -42,6 +42,7 @@ pub fn setup_map(
                         translation,
                         floor_or_wall_texture_atlas.0.clone(),
                         player_texture_atlas.0.clone(),
+                        player_animate_indexs.up[0],
                     );
                     runstate.player = player;
                 }
@@ -72,7 +73,7 @@ pub fn setup_map(
                         commands,
                         translation,
                         floor_or_wall_texture_atlas.0.clone(),
-                        creature_texture_atlas.0.clone(),
+                        player_texture_atlas.0.clone(), //TODO:creature_texture_atlas
                     );
                 }
                 8 => {

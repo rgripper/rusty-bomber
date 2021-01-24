@@ -2,10 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     components::{BombNumber, BombPower, Buff, Player, Velocity},
-    utils::aabb_detection,
+    utils::vecs_xy_intersect,
 };
-
-pub const BUFF: &str = "BUFF";
 
 pub trait BuffSystems {
     fn buff_systems(&mut self) -> &mut Self;
@@ -24,7 +22,7 @@ fn buffs(
     for (player, mut power, mut number, mut velocity) in player.iter_mut() {
         let position = player.translation;
         for (entity, transform, buff) in buff_query.iter() {
-            if aabb_detection(transform.translation.x, transform.translation.y, position) {
+            if vecs_xy_intersect(&transform.translation.truncate(), &position.truncate()) {
                 commands.despawn(entity);
                 match buff {
                     Buff::PowerBuff => {
@@ -32,7 +30,7 @@ fn buffs(
                     }
                     Buff::SpeedBuff => {
                         // TODO:
-                        velocity.max *= 2.0;
+                        velocity.0 = (velocity.0 * 1.2).min(400.0);
                     }
                     Buff::BombNumberBuff => {
                         number.max += 1;
