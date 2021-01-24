@@ -27,7 +27,7 @@ args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "web", "
 command = "wasm-bindgen"
 dependencies = ["cargo-build-web", "wasm-bindgen-cli"]
 
-[tasks.build-web]
+[tasks.build-wasm-bundled]
 args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "bundler", "--no-typescript", "${CARGO_WASM_PATH}"]
 command = "wasm-bindgen"
 dependencies = ["cargo-build-web", "wasm-bindgen-cli"]
@@ -44,11 +44,6 @@ dependencies = ["build-native"]
 command = "basic-http-server"
 args = ["-x"]
 dependencies = ["build-wasm", "basic-http-server"]
-
-[tasks.serve]
-command = "basic-http-server"
-args = ["-x"]
-dependencies = ["build-web", "basic-http-server"]
 
 [tasks.test]
 disabled = true

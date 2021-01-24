@@ -25,6 +25,7 @@ cargo run --features native-release
 ## Bundle and deploy WASM version
 
 ```shell
+cargo make -p release build-wasm-bundled
 cd web
 yarn # should really do it only once to install webpack stuff
 yarn build
