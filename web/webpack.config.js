@@ -18,7 +18,7 @@ module.exports = {
         new HtmlWebpackPlugin({ template: './index.html' }),
         new CopyPlugin({
             patterns: [
-                { from: "../assets", to: "dist" },
+                { from: "../assets", to: "assets" },
             ],
         }),
         // new WasmPackPlugin({
