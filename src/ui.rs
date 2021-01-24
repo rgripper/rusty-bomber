@@ -104,6 +104,8 @@ pub fn button_system(
         (&Interaction, &mut Handle<ColorMaterial>),
         (Mutated<Interaction>, With<Button>),
     >,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
 ) {
     for (interaction, mut material) in interaction_query.iter_mut() {
         match *interaction {
@@ -111,6 +113,11 @@ pub fn button_system(
                 *material = button_materials.pressed.clone();
                 app_state.set_next(AppState::Game).unwrap();
                 game_state.set_next(GameState::Game).unwrap();
+
+                // TODO: just a starter for music
+                let music_handle: Handle<AudioSource> =
+                    asset_server.load("assets/audio/Let Me See Ya Bounce.mp3");
+                audio.play(music_handle)
             }
             Interaction::Hovered => {
                 *material = button_materials.hovered.clone();

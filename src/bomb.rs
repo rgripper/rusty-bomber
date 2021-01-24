@@ -92,6 +92,8 @@ fn space_to_set_bomb(
         (&Transform, &BombPower, &mut BombNumber),
         (With<Player>, Without<Stop>),
     >,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         if let Some(entity) = runstate.player {
@@ -118,6 +120,10 @@ fn space_to_set_bomb(
                     }
                 }
                 if is_not_exist && number.is_enough() {
+                    let bomb_drop_handle: Handle<AudioSource> =
+                        asset_server.load("assets/audio/What.mp3"); // REVIEW: somehow audio is not following the pattern of being stored in Assets object
+                    audio.play(bomb_drop_handle);
+
                     create_bomb(commands, one, bomb_texture_atlas.0.clone(), entity, power);
                     number.current += 1;
                 }
@@ -183,10 +189,15 @@ fn bomb_trigger(
     mut query: Query<(Entity, &mut Bomb, &BombPower, &Transform)>,
     fire_texture_atlas: Res<FireTextureAtlas>,
     mut recovery_bomb_number_events: ResMut<Events<GameEvents>>,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
 ) {
     for (entity, mut bomb, power, transform) in query.iter_mut() {
         let translation = transform.translation;
         if bomb.timer.tick(time.delta_seconds()).finished() {
+            let bomb_explosion_handle: Handle<AudioSource> =
+                asset_server.load("assets/audio/Explosion 2.mp3"); // REVIEW: somehow audio is not following the pattern of being stored in Assets object
+            audio.play(bomb_explosion_handle);
             create_center_fire(
                 commands,
                 translation.truncate(),

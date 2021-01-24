@@ -12,7 +12,10 @@ default = [
   "bevy/bevy_gilrs",
   "bevy/render",
   "bevy/png",
+  "bevy/bevy_audio",
+  "bevy/mp3",
 ]
+
 native = [
   "bevy/bevy_wgpu",
   "bevy/dynamic"
@@ -31,7 +34,6 @@ bevy = {version="0.4", default-features=false}
 bevy_webgl2 = {version="0.4", optional=true}
 winit = "0.24"
 bevy_rapier2d = "0.7.0"
-
 
 [profile.release]
 lto = true

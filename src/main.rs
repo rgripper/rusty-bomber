@@ -101,7 +101,6 @@ fn setup(
     let portal_texture_handle = asset_server.load("door.png");
     let portal_texture_atlas =
         TextureAtlas::from_grid(portal_texture_handle, Vec2::new(16.0, 16.0), 2, 1);
-
     commands
         // cameras
         .spawn(Camera2dBundle {
