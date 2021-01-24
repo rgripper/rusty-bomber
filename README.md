@@ -11,7 +11,7 @@ rustup target add wasm32-unknown-unknown
 ## Build and serve WASM version
 
 ```
-cargo make -p release serve
+cargo make -p release wasm-serve
 ```
 
 then point your browser to http://127.0.0.1:4000/

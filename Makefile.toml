@@ -22,6 +22,11 @@ install_crate = {crate_name = "wasm-bindgen-cli", binary = "wasm-bindgen", test_
 args = ["build", "--target", "wasm32-unknown-unknown", "--features", "web", "@@split(CARGO_RELEASE_ARGS, )"]
 command = "cargo"
 
+[tasks.build-wasm]
+args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "web", "--no-typescript", "${CARGO_WASM_PATH}"]
+command = "wasm-bindgen"
+dependencies = ["cargo-build-web", "wasm-bindgen-cli"]
+
 [tasks.build-web]
 args = ["--out-dir", "${TARGET_DIR}", "--out-name", "wasm", "--target", "bundler", "--no-typescript", "${CARGO_WASM_PATH}"]
 command = "wasm-bindgen"
@@ -34,6 +39,11 @@ command = "cargo"
 [tasks.run]
 command = "${CARGO_TARGET_DIR}/${ENV_DIR}/${CARGO_MAKE_BINARY_EXECUTABLE_NAME}"
 dependencies = ["build-native"]
+
+[tasks.wasm-serve]
+command = "basic-http-server"
+args = ["-x"]
+dependencies = ["build-wasm", "basic-http-server"]
 
 [tasks.serve]
 command = "basic-http-server"
