@@ -1,8 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
     entry: '../target/wasm.js',
@@ -15,15 +15,13 @@ module.exports = {
         filename: 'wasm.js',
     },
     plugins: [
+        new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({ template: './index.html' }),
         new CopyPlugin({
             patterns: [
                 { from: "../assets", to: "assets" },
             ],
-        }),
-        // new WasmPackPlugin({
-        //     crateDirectory: path.resolve(__dirname, "..")
-        // })
+        })
     ],
     devServer: {
         contentBase: path.join(__dirname, '../assets'),
