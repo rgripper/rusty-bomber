@@ -1,5 +1,6 @@
 use crate::{
     assets::*,
+    components::{AnimateIndexs, Player},
     entitys::{
         create_bomb_number_buff_box, create_creature, create_green_way, create_last_wall,
         create_normal_box, create_normal_wall, create_player, create_portal_box,
@@ -16,6 +17,7 @@ pub fn setup_map(
     room_map: Res<Map>,
     player_texture_atlas: Res<PlayerTextureAtlas>,
     floor_or_wall_texture_atlas: Res<FloorOrWallTextureAtlas>,
+    player_animate_indexs: Res<AnimateIndexs<Player>>,
     //creature_texture_atlas: Res<CreatureTextureAtlas>,
     mut runstate: ResMut<RunState>,
 ) {
@@ -40,6 +42,7 @@ pub fn setup_map(
                         translation,
                         floor_or_wall_texture_atlas.0.clone(),
                         player_texture_atlas.0.clone(),
+                        player_animate_indexs.up[0],
                     );
                     runstate.player = player;
                 }

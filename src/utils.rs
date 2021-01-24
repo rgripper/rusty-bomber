@@ -5,20 +5,7 @@ use crate::constants::FLOOR_LAYER;
 pub const SCALE: f32 = 3.0;
 pub const TILE_WIDTH: f32 = 16.0 * SCALE;
 pub const HALF_TILE_WIDTH: f32 = 8.0 * SCALE;
-
-pub fn aabb_detection(x: f32, y: f32, one: Vec3) -> bool {
-    // collide(
-    //     Vec3::new(x, y, 0.0),
-    //     Vec2::splat(20.0),
-    //     one,
-    //     Vec2::splat(20.0),
-    // )
-    // .is_some()
-    one.x + TILE_WIDTH > x
-        && x + TILE_WIDTH > one.x
-        && one.y + TILE_WIDTH > y
-        && y + TILE_WIDTH > one.y
-}
+pub const FIX_DISTANCE: f32 = 5.0;
 
 pub fn get_way_translation(player_position: Vec2) -> Option<(Vec3, Vec3)> {
     match player_position {
@@ -36,10 +23,10 @@ pub fn get_way_translation(player_position: Vec2) -> Option<(Vec3, Vec3)> {
     }
 }
 pub fn vecs_xy_intersect(first: &Vec2, second: &Vec2) -> bool {
-    first.x + TILE_WIDTH > second.x
-        && second.x + TILE_WIDTH > first.x
-        && first.y + TILE_WIDTH > second.y
-        && second.y + TILE_WIDTH > first.y
+    first.x + TILE_WIDTH -FIX_DISTANCE> second.x
+        && second.x + TILE_WIDTH-FIX_DISTANCE > first.x
+        && first.y + TILE_WIDTH-FIX_DISTANCE > second.y
+        && second.y + TILE_WIDTH-FIX_DISTANCE > first.y
 }
 #[inline(always)]
 pub fn index_to_position(x: usize, y: usize, len: usize) -> Vec2 {

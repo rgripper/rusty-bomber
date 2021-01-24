@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::renderer::RenderResource};
 use bevy_rapier2d::{
     physics::{ColliderHandleComponent, RigidBodyHandleComponent},
     rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder},
@@ -20,7 +20,7 @@ use crate::{
     events::GameEvents,
     resources::Map,
     state::RunState,
-    utils::{aabb_detection, TILE_WIDTH},
+    utils::{vecs_xy_intersect, TILE_WIDTH},
 };
 
 pub trait BombSystems {
@@ -342,7 +342,10 @@ fn bomb_block_player(
         for player_position in player_query.iter() {
             let x = player_position.translation.x;
             let y = player_position.translation.y;
-            if !aabb_detection(x, y, bomb_position.translation) {
+            if !vecs_xy_intersect(
+                &player_position.translation.truncate(),
+                &bomb_position.translation.truncate(),
+            ) {
                 commands.insert_one(entity, Wall);
             }
         }
@@ -363,7 +366,7 @@ fn bomb_destruction(
         let position = transform.translation;
         let mut need_destroy = false;
         'fire: for fire in fire_query.iter() {
-            if aabb_detection(fire.translation.x, fire.translation.y, position) {
+            if vecs_xy_intersect(&fire.translation.truncate(), &position.truncate()) {
                 need_destroy = true;
                 break 'fire;
             }

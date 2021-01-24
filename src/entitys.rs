@@ -60,7 +60,7 @@ pub fn create_dyn_rigid_body(translation_x: f32, translation_y: f32) -> RigidBod
 }
 #[inline(always)]
 pub fn create_collider(entity: Entity) -> ColliderBuilder {
-    ColliderBuilder::cuboid(TILE_WIDTH / 2.0, TILE_WIDTH / 2.0)
+    ColliderBuilder::cuboid(HALF_TILE_WIDTH, HALF_TILE_WIDTH)
         .friction(0.0)
         .restitution(0.0)
         .user_data(entity.to_bits() as u128)
@@ -81,7 +81,7 @@ pub fn create_creature_collider(entity: Entity) -> ColliderBuilder {
 }
 #[inline(always)]
 pub fn create_fire_collider(entity: Entity) -> ColliderBuilder {
-    ColliderBuilder::cuboid(TILE_WIDTH / 2.0, TILE_WIDTH / 2.0)
+    ColliderBuilder::cuboid(HALF_TILE_WIDTH, HALF_TILE_WIDTH)
         .friction(0.0)
         .restitution(0.0)
         .user_data(entity.to_bits() as u128)
@@ -89,7 +89,7 @@ pub fn create_fire_collider(entity: Entity) -> ColliderBuilder {
 }
 #[inline(always)]
 pub fn create_ball_collider(entity: Entity) -> ColliderBuilder {
-    ColliderBuilder::ball(TILE_WIDTH / 2.0)
+    ColliderBuilder::ball(HALF_TILE_WIDTH)
         .friction(0.0)
         .restitution(0.0)
         .sensor(true)
@@ -108,7 +108,13 @@ pub fn create_player_collider(entity: Entity) -> ColliderBuilder {
 
 #[inline(always)]
 pub fn create_sensor_collider(entity: Entity) -> ColliderBuilder {
-    ColliderBuilder::cuboid(TILE_WIDTH / 2.0, TILE_WIDTH / 2.0)
+    ColliderBuilder::cuboid(HALF_TILE_WIDTH, HALF_TILE_WIDTH)
+        .sensor(true)
+        .user_data(entity.to_bits() as u128)
+}
+#[inline(always)]
+pub fn create_ball_sensor_collider(entity: Entity) -> ColliderBuilder {
+    ColliderBuilder::ball(HALF_TILE_WIDTH)
         .sensor(true)
         .user_data(entity.to_bits() as u128)
 }
@@ -211,12 +217,18 @@ pub fn create_player(
     translation: Vec2,
     texture_handle: Handle<TextureAtlas>,
     player_texture_handle: Handle<TextureAtlas>,
+    player_animate_index: u32,
 ) -> Option<Entity> {
     create_green_way(commands, translation, texture_handle);
     let transform = create_transform(translation, PLAYER_LAYER);
-    create_sprite_sheet(commands, transform, player_texture_handle, 0)
-        .with_bundle(PlayerBundle::default())
-        .current_entity()
+    create_sprite_sheet(
+        commands,
+        transform,
+        player_texture_handle,
+        player_animate_index,
+    )
+    .with_bundle(PlayerBundle::default())
+    .current_entity()
 }
 pub fn create_bomb_number_buff_box(
     commands: &mut Commands,

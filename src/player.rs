@@ -1,6 +1,6 @@
 use crate::{
     components::{
-        AnimateData, Animation, BombNumber, BombPower, Destructible, Direction, Player, Stop,
+        AnimateIndexs, Animation, BombNumber, BombPower, Destructible, Direction, Player, Stop,
         Velocity,
     },
     entitys::{create_dyn_rigid_body, create_player_collider},
@@ -87,7 +87,6 @@ fn movement(
     mut query: Query<(Entity, &Velocity, &mut Direction, &mut Player), Without<Stop>>,
     mut rigid_body_handle_query: Query<&mut RigidBodyHandleComponent>,
     mut rigid_body_set: ResMut<RigidBodySet>,
-    events: Res<EventQueue>,
 ) -> Result<(), QueryError> {
     for (entity, velocity, mut direction, mut player) in query.iter_mut() {
         let movement_action = if keyboard_input.pressed(KeyCode::Left) {
@@ -131,9 +130,9 @@ fn movement(
         } else {
             error!("Get rigid body fail!");
         }
-        while let Ok(proximity_event) = events.proximity_events.pop() {
-            info!("Received proximity event: {:?}", proximity_event);
-        }
+        // while let Ok(proximity_event) = events.proximity_events.pop() {
+        //     info!("Received proximity event: {:?}", proximity_event);
+        // }
     }
     Ok(())
 }
@@ -141,7 +140,7 @@ fn movement(
 // animate
 fn animate_player(
     time: Res<Time>,
-    animate_date: Res<AnimateData<Player>>,
+    animate_date: Res<AnimateIndexs<Player>>,
     mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Player, &Direction)>,
 ) {
     for (mut animation, mut sprite, _, direction) in query

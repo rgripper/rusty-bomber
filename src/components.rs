@@ -16,6 +16,7 @@ pub enum GameMode {
     SinglePlayer,
     MultiPlayer,
 }
+#[derive(Debug)]
 pub enum Destructible {
     NormalBox,
     PowerBuffBox,
@@ -32,7 +33,7 @@ pub struct Player {
 pub struct Portal;
 pub struct Stop;
 pub struct Velocity(pub f32);
-
+pub struct PlayerSensor;
 pub struct Bomb {
     pub timer: Timer,
     pub player: Entity,
@@ -92,14 +93,14 @@ pub enum Direction {
 }
 pub const NEXT_PLAYER_SHEET: u32 = 14;
 
-pub struct AnimateData<T> {
+pub struct AnimateIndexs<T> {
     pub left: Vec<u32>,
     pub right: Vec<u32>,
     pub up: Vec<u32>,
     pub down: Vec<u32>,
-    _photo_data: PhantomData<T>,
+    _mark: PhantomData<T>,
 }
-impl<T> AnimateData<T> {
+impl<T> AnimateIndexs<T> {
     pub fn player1() -> Self {
         let left = vec![10, 11, 12, 13];
         let right = vec![4, 5, 6, 7];
@@ -110,7 +111,7 @@ impl<T> AnimateData<T> {
             right,
             up,
             down,
-            _photo_data: PhantomData::default(),
+            _mark: PhantomData::default(),
         }
     }
     pub fn player2() -> Self {
@@ -123,33 +124,33 @@ impl<T> AnimateData<T> {
             right,
             up,
             down,
-            _photo_data: PhantomData::default(),
+            _mark: PhantomData::default(),
         }
     }
     pub fn player3() -> Self {
-        let left = vec![24 + 14, 25 + 14, 26 + 14, 27 + 14];
-        let right = vec![18 + 14, 19 + 14, 20 + 14, 21 + 14];
-        let up = vec![14 + 14, 22 + 14, 23 + 14];
-        let down = vec![15 + 14, 16 + 14, 17 + 14];
+        let left = vec![38, 39, 40, 41];
+        let right = vec![32, 33, 34, 35];
+        let up = vec![28, 36, 37];
+        let down = vec![29, 30, 31];
         Self {
             left,
             right,
             up,
             down,
-            _photo_data: PhantomData::default(),
+            _mark: PhantomData::default(),
         }
     }
     pub fn player4() -> Self {
-        let left = vec![24 + 14 + 14, 25 + 14 + 14, 26 + 14 + 14, 27 + 14 + 14];
-        let right = vec![18 + 14 + 14, 19 + 14 + 14, 20 + 14 + 14, 21 + 14 + 14];
-        let up = vec![14 + 14 + 14, 22 + 14 + 14, 23 + 14 + 14];
-        let down = vec![15 + 14 + 14, 16 + 14 + 14, 17 + 14 + 14];
+        let left = vec![52, 53, 54, 55];
+        let right = vec![46, 47, 48, 49];
+        let up = vec![42, 50, 51];
+        let down = vec![43, 44, 45];
         Self {
             left,
             right,
             up,
             down,
-            _photo_data: PhantomData::default(),
+            _mark: PhantomData::default(),
         }
     }
 }

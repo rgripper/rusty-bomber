@@ -1,5 +1,5 @@
 use crate::{
-    components::{AnimateData, Animation, Destructible, Direction, Player, Stop, Velocity},
+    components::{AnimateIndexs, Animation, Destructible, Direction, Player, Stop, Velocity},
     entitys::{create_creature_collider, create_dyn_rigid_body},
     errors::querr_error_handler,
     events::*,
@@ -170,7 +170,7 @@ fn despawn_player(
 // animate
 fn animate_creature(
     time: Res<Time>,
-    animate_date: Res<AnimateData<Creature>>,
+    animate_date: Res<AnimateIndexs<Creature>>,
     mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Direction), With<Creature>>,
 ) {
     for (mut animation, mut sprite, direction) in query.iter_mut() {

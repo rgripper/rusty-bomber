@@ -5,7 +5,7 @@ use bevy_rapier2d::{
     rapier::math::Vector,
 };
 
-use components::{AnimateData, Player};
+use components::{AnimateIndexs, Player};
 use creatures::Creature;
 use errors::error_handler;
 use events::{game_events_handle, jump_state, GameEvents};
@@ -52,8 +52,8 @@ fn main() {
     app.add_plugins(bevy_webgl2::DefaultPlugins);
     app.add_resource(Map::first())
         .init_resource::<ButtonMaterials>()
-        .add_resource(AnimateData::<Player>::player3())
-        .add_resource(AnimateData::<Creature>::player2())
+        .add_resource(AnimateIndexs::<Player>::player4())
+        .add_resource(AnimateIndexs::<Creature>::player2())
         .add_event::<GameEvents>()
         .add_plugin(AppStatePluge)
         .add_plugin(GameStatePlugin)
