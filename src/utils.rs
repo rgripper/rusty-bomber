@@ -5,7 +5,7 @@ use crate::constants::FLOOR_LAYER;
 pub const SCALE: f32 = 3.0;
 pub const TILE_WIDTH: f32 = 16.0 * SCALE;
 pub const HALF_TILE_WIDTH: f32 = 8.0 * SCALE;
-pub const FIX_DISTANCE: f32 = 5.0;
+pub const FIX_DISTANCE: f32 = 10.0;
 
 pub fn get_way_translation(player_position: Vec2) -> Option<(Vec3, Vec3)> {
     match player_position {
