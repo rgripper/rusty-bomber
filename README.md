@@ -22,12 +22,13 @@ then point your browser to http://127.0.0.1:4000/
 cargo run --features native-release
 ```
 
-## Build and run web version
+## Bundle and deploy WASM version
 
 ```shell
 cd web
-yarn install #if you haaven't installed anything yet
-yarn serve:dev
+yarn # should really do it only once to install webpack stuff
+yarn build
+yarn deploy
 ```
 
 ## Developer
