@@ -128,7 +128,7 @@ fn creature_player_collision(
     commands: &mut Commands,
     mut player_query: Query<
         (Entity, &mut Transform),
-        (With<Player>, Without<Stop>, Without<StopAndFlashing>),
+        (With<Player>, Without<Stop>),
     >,
     mut creature_query: Query<&mut Transform, With<Creature>>,
     mut game_over_events: ResMut<Events<GameEvents>>,
