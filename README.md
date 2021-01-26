@@ -36,7 +36,6 @@ yarn deploy
 
 ```
 cargo run --features native
-
 ```
 
 ## Spritesheet
