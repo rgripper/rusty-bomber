@@ -37,7 +37,7 @@ impl Default for CreatureBundle {
             direction: Direction::Right,
             velocity: Velocity(200.0),
             destructible: Destructible::Creature,
-            animation: Animation(Timer::from_seconds(1.0 / 50.0, true)),
+            animation: Animation(Timer::from_seconds(0.3, true)),
         }
     }
 }
@@ -55,7 +55,7 @@ const DIRECTIONS: [Direction; 4] = [
 ];
 const TURN_PROBABILITY: f32 = 0.02;
 fn creature_movement(
-    mut query: Query<(Entity, &Velocity, &mut Direction), With<Creature>>,
+    mut query: Query<(Entity, &Velocity, &mut Direction), (With<Creature>,Without<Stop>)>,
     mut rigid_body_handle_query: Query<&mut RigidBodyHandleComponent>,
     mut rigid_body_set: ResMut<RigidBodySet>,
 ) -> Result<(), QueryError> {
@@ -139,7 +139,6 @@ fn creature_player_collision(
             if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
                 commands.insert(entity, StopAndFlashing::default());
                 game_over_events.send(GameEvents::GameOver);
-                // TODO: stop the game (stop movement system?)
             }
         }
     }
@@ -171,7 +170,7 @@ fn despawn_player(
 fn animate_creature(
     time: Res<Time>,
     animate_date: Res<AnimateIndexs<Creature>>,
-    mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Direction), With<Creature>>,
+    mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Direction), (With<Creature>,Without<Stop>)>,
 ) {
     for (mut animation, mut sprite, direction) in query.iter_mut() {
         let indexs = match direction {

@@ -52,7 +52,7 @@ impl Default for PlayerBundle {
             velocity: Velocity(150.0),
             bomb_power: BombPower(1),
             bomb_number: BombNumber { max: 1, current: 0 },
-            animation: Animation(Timer::from_seconds(1.0, true)),
+            animation: Animation(Timer::from_seconds(0.3, true)),
             destructible: Destructible::Player,
         }
     }
@@ -186,7 +186,7 @@ fn velocity_to_animation(
     mut query: Query<(&Velocity, &mut Animation), (With<Player>, Changed<Velocity>)>,
 ) {
     for (velocity, mut animation) in query.iter_mut() {
-        animation.0.set_duration(1.0 / velocity.0 * 4.0);
+        animation.0.set_duration(1.0 / velocity.0 * 40.0);
     }
 }
 fn stop_player(mut query: Query<&mut Player, With<Stop>>) {
