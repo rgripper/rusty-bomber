@@ -23,10 +23,10 @@ pub fn get_way_translation(player_position: Vec2) -> Option<(Vec3, Vec3)> {
     }
 }
 pub fn vecs_xy_intersect(first: &Vec2, second: &Vec2) -> bool {
-    first.x + TILE_WIDTH -FIX_DISTANCE> second.x
-        && second.x + TILE_WIDTH-FIX_DISTANCE > first.x
-        && first.y + TILE_WIDTH-FIX_DISTANCE > second.y
-        && second.y + TILE_WIDTH-FIX_DISTANCE > first.y
+    first.x + TILE_WIDTH - FIX_DISTANCE > second.x
+        && second.x + TILE_WIDTH - FIX_DISTANCE > first.x
+        && first.y + TILE_WIDTH - FIX_DISTANCE > second.y
+        && second.y + TILE_WIDTH - FIX_DISTANCE > first.y
 }
 #[inline(always)]
 pub fn index_to_position(x: usize, y: usize, len: usize) -> Vec2 {

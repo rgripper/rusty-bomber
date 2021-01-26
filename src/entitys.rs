@@ -69,7 +69,6 @@ const CREATURE_GROUPS: u16 = 0b0010;
 const PLAYER_GROUPS: u16 = 0b0001;
 const WALL_GROUPS: u16 = 0b0100;
 
-
 #[inline(always)]
 pub fn create_creature_collider(entity: Entity) -> ColliderBuilder {
     //ColliderBuilder::cuboid(TILE_WIDTH / 2.0, TILE_WIDTH / 2.0)

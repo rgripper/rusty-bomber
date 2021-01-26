@@ -16,7 +16,7 @@ pub fn querr_error_handler(In(result): In<Result<(), QueryError>>) {
     match result {
         Ok(_) => {}
         Err(err) => {
-            error!("query error!{:?}",err);
+            error!("query error!{:?}", err);
         }
     }
 }

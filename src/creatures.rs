@@ -55,7 +55,7 @@ const DIRECTIONS: [Direction; 4] = [
 ];
 const TURN_PROBABILITY: f32 = 0.02;
 fn creature_movement(
-    mut query: Query<(Entity, &Velocity, &mut Direction), (With<Creature>,Without<Stop>)>,
+    mut query: Query<(Entity, &Velocity, &mut Direction), (With<Creature>, Without<Stop>)>,
     mut rigid_body_handle_query: Query<&mut RigidBodyHandleComponent>,
     mut rigid_body_set: ResMut<RigidBodySet>,
 ) -> Result<(), QueryError> {
@@ -126,10 +126,7 @@ impl CreatureSystems for SystemStage {
 
 fn creature_player_collision(
     commands: &mut Commands,
-    mut player_query: Query<
-        (Entity, &mut Transform),
-        (With<Player>, Without<Stop>),
-    >,
+    mut player_query: Query<(Entity, &mut Transform), (With<Player>, Without<Stop>)>,
     mut creature_query: Query<&mut Transform, With<Creature>>,
     mut game_over_events: ResMut<Events<GameEvents>>,
 ) {
@@ -170,7 +167,10 @@ fn despawn_player(
 fn animate_creature(
     time: Res<Time>,
     animate_date: Res<AnimateIndexs<Creature>>,
-    mut query: Query<(&mut Animation, &mut TextureAtlasSprite, &Direction), (With<Creature>,Without<Stop>)>,
+    mut query: Query<
+        (&mut Animation, &mut TextureAtlasSprite, &Direction),
+        (With<Creature>, Without<Stop>),
+    >,
 ) {
     for (mut animation, mut sprite, direction) in query.iter_mut() {
         let indexs = match direction {

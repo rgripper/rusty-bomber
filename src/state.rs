@@ -1,7 +1,16 @@
 use bevy::prelude::*;
 use bevy_rapier2d::physics::RapierConfiguration;
 
-use crate::{bomb::BombSystems, buff::BuffSystems, components::{InGame, Player, Stop}, creatures::{Creature, CreatureSystems}, player::PlayerSystems, portal::PortalSystems, setup_map::setup_map, ui::{button_system, game_victory, gameover_menu, pause_menu, start_menu, WillDestroy}};
+use crate::{
+    bomb::BombSystems,
+    buff::BuffSystems,
+    components::{InGame, Player, Stop},
+    creatures::{Creature, CreatureSystems},
+    player::PlayerSystems,
+    portal::PortalSystems,
+    setup_map::setup_map,
+    ui::{button_system, game_victory, gameover_menu, pause_menu, start_menu, WillDestroy},
+};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppState {
@@ -98,9 +107,9 @@ impl Plugin for GameStatePlugin {
     }
 }
 fn pause_enter(
-    commands:&mut Commands,
-    player_query: Query<Entity,(With<Player>,Without<Stop>)>,
-    creature_query: Query<Entity,(With<Creature>,Without<Stop>)>
+    commands: &mut Commands,
+    player_query: Query<Entity, (With<Player>, Without<Stop>)>,
+    creature_query: Query<Entity, (With<Creature>, Without<Stop>)>,
 ) {
     for entity in player_query.iter() {
         commands.insert_one(entity, Stop);
@@ -109,10 +118,7 @@ fn pause_enter(
         commands.insert_one(entity, Stop);
     }
 }
-fn pause_exit(
-    commands:&mut Commands,
-    query: Query<Entity,With<Stop>>,
-) {
+fn pause_exit(commands: &mut Commands, query: Query<Entity, With<Stop>>) {
     for entity in query.iter() {
         commands.remove_one::<Stop>(entity);
     }
