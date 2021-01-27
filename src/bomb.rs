@@ -402,7 +402,6 @@ fn bomb_destruction(
                 }
                 Destructible::Creature => {
                     commands.despawn(entity);
-                    info!("Destroy a creature!");
                 }
             }
         }

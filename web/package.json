@@ -1,8 +1,8 @@
 {
-  "name": "game-temp-1",
+  "name": "rusty-bomber",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:rgripper/game-temp-1.git",
+  "repository": "git@github.com:rgripper/rusty-bomber.git",
   "license": "MIT",
   "scripts": {
     "build": "webpack",

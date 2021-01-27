@@ -58,6 +58,6 @@ https://opengameart.org/content/16-bit-rpg-potion-pack
 bomb icon: [sprite_attack](https://opengameart.org/users/spriteattack) at
 https://opengameart.org/content/emotional-explosives
 
-License:
+Licenses:
 [CC 3.0](https://creativecommons.org/licenses/by/3.0/)
 [CC 1.0](https://creativecommons.org/publicdomain/zero/1.0/)

@@ -65,7 +65,7 @@ pub fn start_menu(
                     parent
                         .spawn(TextBundle {
                             text: Text {
-                                value: "enter".to_string(),
+                                value: "Start".to_string(),
                                 font: runstate.font_handle.clone(),
                                 style: TextStyle {
                                     font_size: 50.0,
@@ -342,7 +342,7 @@ pub fn gameover_menu(
                         ..Default::default()
                     },
                     text: Text {
-                        value: "enter".to_string(),
+                        value: "Start".to_string(),
                         font: runstate.font_handle.clone(),
                         style: TextStyle {
                             font_size: 50.0,
