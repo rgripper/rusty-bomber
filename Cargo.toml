@@ -1,5 +1,5 @@
 [package]
-name = "game-temp-1"
+name = "rusty-bomber"
 version = "0.1.0"
 authors = ["Vladimir <azuresplash@gmail.com>"]
 edition = "2018"
