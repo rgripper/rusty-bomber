@@ -35,7 +35,7 @@ fn main() {
     let mut app = App::build();
     app.add_resource(Msaa { samples: 4 })
         .add_resource(WindowDescriptor {
-            title: "BomberMan".to_string(),
+            title: "Rusty Bomber".to_string(),
             width: MAX_WIDTH,
             height: MAX_HEIGHT,
             resizable: true,

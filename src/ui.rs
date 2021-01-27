@@ -37,7 +37,7 @@ pub fn start_menu(
                         ..Default::default()
                     },
                     text: Text {
-                        value: "Bomberman".to_string(),
+                        value: "Rusty Bomber".to_string(),
                         font: runstate.font_handle.clone(),
                         style: TextStyle {
                             font_size: 100.0,
