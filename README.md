@@ -38,7 +38,7 @@ yarn deploy
 cargo run --features native
 ```
 
-## Spritesheet
+## Assets and Attribution
 
 bomb_party_v4.png
 
