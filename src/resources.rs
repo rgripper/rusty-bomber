@@ -104,6 +104,7 @@ impl Map {
         }
     }
     pub fn random(&mut self) {
+        //TODO:Real random
         let room_map = vec![
             vec![1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1],
             vec![1, 0, 2, 2, 0, 4, 0, 0, 2, 0, 0, 7, 1],

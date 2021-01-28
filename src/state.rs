@@ -4,7 +4,7 @@ use bevy_rapier2d::physics::RapierConfiguration;
 use crate::{
     bomb::BombSystems,
     buff::BuffSystems,
-    components::{InGame, Player, Stop},
+    components::{Animation, Bomb, Fire, InGame, Player, Stop},
     creatures::{Creature, CreatureSystems},
     player::PlayerSystems,
     portal::PortalSystems,
@@ -106,10 +106,14 @@ impl Plugin for GameStatePlugin {
             });
     }
 }
+// TODO:This system can be more granular and then processed in parallel.
 fn pause_enter(
     commands: &mut Commands,
     player_query: Query<Entity, (With<Player>, Without<Stop>)>,
     creature_query: Query<Entity, (With<Creature>, Without<Stop>)>,
+    mut animation_query: Query<&mut Animation>,
+    mut bomb_query: Query<&mut Bomb>,
+    mut fire_query: Query<&mut Fire>,
 ) {
     for entity in player_query.iter() {
         commands.insert_one(entity, Stop);
@@ -117,10 +121,34 @@ fn pause_enter(
     for entity in creature_query.iter() {
         commands.insert_one(entity, Stop);
     }
+    for mut animation in animation_query.iter_mut().filter(|a| !a.0.paused()) {
+        animation.0.pause();
+    }
+    for mut bomb in bomb_query.iter_mut().filter(|a| !a.timer.paused()) {
+        bomb.timer.pause();
+    }
+    for mut fire in fire_query.iter_mut().filter(|a| !a.0.paused()) {
+        fire.0.pause();
+    }
 }
-fn pause_exit(commands: &mut Commands, query: Query<Entity, With<Stop>>) {
+fn pause_exit(
+    commands: &mut Commands,
+    query: Query<Entity, With<Stop>>,
+    mut animation_query: Query<&mut Animation>,
+    mut bomb_query: Query<&mut Bomb>,
+    mut fire_query: Query<&mut Fire>,
+) {
     for entity in query.iter() {
         commands.remove_one::<Stop>(entity);
+    }
+    for mut animation in animation_query.iter_mut().filter(|a| a.0.paused()) {
+        animation.0.unpause();
+    }
+    for mut bomb in bomb_query.iter_mut().filter(|a| a.timer.paused()) {
+        bomb.timer.unpause();
+    }
+    for mut fire in fire_query.iter_mut().filter(|a| a.0.paused()) {
+        fire.0.unpause();
     }
 }
 pub struct RunState {
