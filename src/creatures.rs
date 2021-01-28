@@ -1,25 +1,14 @@
 use crate::{
-    components::{AnimateIndexs, Animation, Destructible, Direction, Player, Stop, Velocity},
-    entitys::{create_creature_collider, create_dyn_rigid_body},
+    components::{AnimateIndexs, Animation, Destructible, Direction, Stop, Velocity},
     errors::querr_error_handler,
-    events::*,
     ui::DrawBlinkTimer,
-    utils::vecs_xy_intersect,
 };
+use bevy::ecs::{Query, ResMut, SystemStage, With};
 use bevy::{ecs::QueryError, prelude::*};
-use bevy::{
-    ecs::{Query, ResMut, SystemStage, With},
-    sprite::ColorMaterial,
-};
 use bevy_rapier2d::{
-    na::Vector2,
-    physics::{ColliderHandleComponent, RigidBodyHandleComponent},
-    rapier::{
-        dynamics::{RigidBodyBuilder, RigidBodySet},
-        geometry::ColliderBuilder,
-    },
+    na::Vector2, physics::RigidBodyHandleComponent, rapier::dynamics::RigidBodySet,
 };
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{thread_rng, Rng};
 
 #[derive(Bundle)]
 pub struct CreatureBundle {
@@ -42,30 +31,37 @@ impl Default for CreatureBundle {
     }
 }
 
-pub struct CreatureMaterial(pub Handle<ColorMaterial>);
-
 pub struct Creature;
 
-// could be done with a crate
-const DIRECTIONS: [Direction; 4] = [
-    Direction::Up,
-    Direction::Down,
-    Direction::Left,
-    Direction::Right,
-];
-const TURN_PROBABILITY: f32 = 0.02;
+const TURN_PROBABILITY: i32 = 4;
+pub trait CreatureSystems {
+    fn creature_systems(&mut self) -> &mut Self;
+}
+impl CreatureSystems for SystemStage {
+    fn creature_systems(&mut self) -> &mut Self {
+        self.add_system(
+            creature_movement
+                .system()
+                .chain(querr_error_handler.system()),
+        )
+        .add_system(despawn_player.system())
+        .add_system(animate_creature.system())
+    }
+}
+
 fn creature_movement(
     mut query: Query<(Entity, &Velocity, &mut Direction), (With<Creature>, Without<Stop>)>,
     mut rigid_body_handle_query: Query<&mut RigidBodyHandleComponent>,
     mut rigid_body_set: ResMut<RigidBodySet>,
 ) -> Result<(), QueryError> {
     for (entity, velocity, mut direction) in query.iter_mut() {
-        let mut rng = thread_rng();
         let rigid_body_handle =
             rigid_body_handle_query.get_component_mut::<RigidBodyHandleComponent>(entity)?;
-        if rand::random::<f32>() < TURN_PROBABILITY {
+        let mut rng = thread_rng();
+        let n = rng.gen_range(0..=100);
+        if n < TURN_PROBABILITY {
             // only change ocassionally
-            *direction = *DIRECTIONS.choose(&mut rng).unwrap()
+            *direction = rand::random();
         }
         let linvel = match *direction {
             Direction::Left => Vector2::new(-velocity.0, 0.0),
@@ -82,67 +78,9 @@ fn creature_movement(
     }
     Ok(())
 }
-fn for_creature_add_collision_detection(
-    commands: &mut Commands,
-    query: Query<
-        (Entity, &Transform),
-        (
-            With<Creature>,
-            Without<RigidBodyBuilder>,
-            Without<ColliderBuilder>,
-            Without<RigidBodyHandleComponent>,
-            Without<ColliderHandleComponent>,
-        ),
-    >,
-) {
-    for (entity, transform) in query.iter() {
-        let translation = transform.translation;
-        commands.insert(
-            entity,
-            (
-                create_dyn_rigid_body(translation.x, translation.y),
-                create_creature_collider(entity),
-            ),
-        );
-    }
-}
-
-pub trait CreatureSystems {
-    fn creature_systems(&mut self) -> &mut Self;
-}
-impl CreatureSystems for SystemStage {
-    fn creature_systems(&mut self) -> &mut Self {
-        self.add_system(creature_player_collision.system())
-            .add_system(for_creature_add_collision_detection.system())
-            .add_system(
-                creature_movement
-                    .system()
-                    .chain(querr_error_handler.system()),
-            )
-            .add_system(despawn_player.system())
-            .add_system(animate_creature.system())
-    }
-}
-
-fn creature_player_collision(
-    commands: &mut Commands,
-    mut player_query: Query<(Entity, &mut Transform), (With<Player>, Without<Stop>)>,
-    mut creature_query: Query<&mut Transform, With<Creature>>,
-    mut game_over_events: ResMut<Events<GameEvents>>,
-) {
-    for (entity, player_transform) in player_query.iter_mut() {
-        let player_pos = &player_transform.translation.truncate();
-        for creature_transform in creature_query.iter_mut() {
-            if vecs_xy_intersect(&creature_transform.translation.truncate(), player_pos) {
-                commands.insert(entity, StopAndFlashing::default());
-                game_over_events.send(GameEvents::GameOver);
-            }
-        }
-    }
-}
 
 #[derive(Bundle)]
-struct StopAndFlashing(Stop, DrawBlinkTimer, Timer);
+pub struct StopAndFlashing(Stop, DrawBlinkTimer, Timer);
 impl Default for StopAndFlashing {
     fn default() -> Self {
         Self(

@@ -23,6 +23,7 @@ pub mod creatures;
 pub mod entitys;
 pub mod errors;
 pub mod events;
+pub mod physics;
 pub mod player;
 pub mod portal;
 pub mod resources;

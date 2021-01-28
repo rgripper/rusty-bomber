@@ -6,6 +6,7 @@ use crate::{
     buff::BuffSystems,
     components::{Animation, Bomb, Fire, InGame, Player, Stop},
     creatures::{Creature, CreatureSystems},
+    physics::PhysicsSystems,
     player::PlayerSystems,
     portal::PortalSystems,
     setup_map::setup_map,
@@ -40,6 +41,7 @@ impl Plugin for AppStatePluge {
                     //.on_state_enter(AppState::Game, spawn_game_ui.system())
                     .update_stage(AppState::Game, |stage: &mut SystemStage| {
                         stage
+                            .physics_systems()
                             .player_systems()
                             .bomb_systems()
                             .buff_systems()

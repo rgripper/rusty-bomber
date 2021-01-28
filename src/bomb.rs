@@ -1,8 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier2d::{
-    physics::{ColliderHandleComponent, RigidBodyHandleComponent},
-    rapier::{dynamics::RigidBodyBuilder, geometry::ColliderBuilder},
-};
 
 use crate::{
     assets::{
@@ -14,8 +10,8 @@ use crate::{
         Wall, FIRE_ANIMATE_TIME,
     },
     entitys::{
-        create_bomb, create_bomb_number_buff, create_center_fire, create_collider, create_ember,
-        create_portal, create_power_buff, create_speed_buff, create_static_rigid_body,
+        create_bomb, create_bomb_number_buff, create_center_fire, create_ember, create_portal,
+        create_power_buff, create_speed_buff,
     },
     events::GameEvents,
     resources::Map,
@@ -36,7 +32,6 @@ impl BombSystems for SystemStage {
             .add_system(animate_bomb.system())
             .add_system(animate_fire.system())
             .add_system(ember_trigger.system())
-            .add_system(for_wall_add_collision_detection.system())
     }
 }
 
@@ -58,30 +53,7 @@ impl BombBunble {
         }
     }
 }
-fn for_wall_add_collision_detection(
-    commands: &mut Commands,
-    query: Query<
-        (Entity, &Transform),
-        (
-            With<Wall>,
-            Without<RigidBodyBuilder>,
-            Without<ColliderBuilder>,
-            Without<RigidBodyHandleComponent>,
-            Without<ColliderHandleComponent>,
-        ),
-    >,
-) {
-    for (entity, transform) in query.iter() {
-        let translation = transform.translation;
-        commands.insert(
-            entity,
-            (
-                create_static_rigid_body(translation.x, translation.y),
-                create_collider(entity),
-            ),
-        );
-    }
-}
+
 fn space_to_set_bomb(
     commands: &mut Commands,
     bomb_texture_atlas: Res<BombTextureAtlas>,

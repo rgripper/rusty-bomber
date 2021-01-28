@@ -3,19 +3,13 @@ use crate::{
         AnimateIndexs, Animation, BombNumber, BombPower, Destructible, Direction, Player, Stop,
         Velocity,
     },
-    entitys::{create_dyn_rigid_body, create_player_collider},
     errors::querr_error_handler,
 };
 
 use anyhow::Result;
 use bevy::{ecs::QueryError, prelude::*};
 use bevy_rapier2d::{
-    na::Vector2,
-    physics::{ColliderHandleComponent, RigidBodyHandleComponent},
-    rapier::{
-        dynamics::{RigidBodyBuilder, RigidBodySet},
-        geometry::ColliderBuilder,
-    },
+    na::Vector2, physics::RigidBodyHandleComponent, rapier::dynamics::RigidBodySet,
 };
 
 pub trait PlayerSystems {
@@ -27,7 +21,6 @@ impl PlayerSystems for SystemStage {
             // movement
             .add_system(movement.system().chain(querr_error_handler.system()))
             .add_system(stop_player.system())
-            .add_system(for_player_add_collision_detection.system())
             // animate
             .add_system(animate_player.system())
             .add_system(velocity_to_animation.system())
@@ -55,30 +48,6 @@ impl Default for PlayerBundle {
             animation: Animation(Timer::from_seconds(0.3, true)),
             destructible: Destructible::Player,
         }
-    }
-}
-fn for_player_add_collision_detection(
-    commands: &mut Commands,
-    query: Query<
-        (Entity, &Transform),
-        (
-            With<Player>,
-            Without<RigidBodyBuilder>,
-            Without<ColliderBuilder>,
-            Without<RigidBodyHandleComponent>,
-            Without<ColliderHandleComponent>,
-        ),
-    >,
-) {
-    for (entity, transform) in query.iter() {
-        let translation = transform.translation;
-        commands.insert(
-            entity,
-            (
-                create_dyn_rigid_body(translation.x, translation.y),
-                create_player_collider(entity),
-            ),
-        );
     }
 }
 

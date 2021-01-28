@@ -83,7 +83,11 @@ impl Ember {
         Ember(Timer::from_seconds(EMBER_START_TIME, false), power)
     }
 }
-
+use bevy_rapier2d::na::Vector2;
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Direction {
     Left = 0,
@@ -91,6 +95,28 @@ pub enum Direction {
     Right = 2,
     Down = 3,
 }
+impl Distribution<Direction> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Direction {
+        match rng.gen_range(0..=3) {
+            // rand 0.8
+            0 => Direction::Left,
+            1 => Direction::Up,
+            2 => Direction::Right,
+            _ => Direction::Down,
+        }
+    }
+}
+impl Direction {
+    pub fn into_dir(&self) -> Vector2<f32> {
+        match self {
+            Direction::Up => Vector2::new(-1.0, 0.0),
+            Direction::Left => Vector2::new(0.0, 1.0),
+            Direction::Down => Vector2::new(1.0, 0.0),
+            Direction::Right => Vector2::new(0.0, -1.0),
+        }
+    }
+}
+
 pub const NEXT_PLAYER_SHEET: u32 = 14;
 
 pub struct AnimateIndexs<T> {
