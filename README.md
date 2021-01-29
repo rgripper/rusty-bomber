@@ -11,14 +11,14 @@ rustup target add wasm32-unknown-unknown
 ## Hwo to play?
 You can download and try it [here](https://github.com/rgripper/rusty-bomber/releases), but currently only the win10 version is compiled.
 
+You can also try it online directly [here](https://rgripper.github.io/rusty-bomber/), but due to network speed and other reasons, the loading time may be very long.
+
+```
     Arrows: move
-
     Space: set bomb
-
     Enter: start or restart
-
     Esc: Exit the game
-
+```
     
 ## Build and serve WASM version
 
