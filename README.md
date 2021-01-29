@@ -19,7 +19,7 @@ then point your browser to http://127.0.0.1:4000/
 ## Build and run native version
 
 ```
-cargo run --features native-release
+cargo run --features native-release --release
 ```
 
 ## Bundle and deploy WASM version
