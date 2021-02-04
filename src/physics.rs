@@ -4,13 +4,11 @@ use bevy_rapier2d::{
     na::Vector2,
     physics::{ColliderHandleComponent, EventQueue, RigidBodyHandleComponent},
     rapier::{
-        dynamics::{RigidBodyBuilder, RigidBodySet},
-        geometry::{ColliderBuilder, ColliderSet, InteractionGroups, Ray},
-        ncollide::{math::Point, narrow_phase::ContactEvent::Started},
-        pipeline::QueryPipeline,
+        dynamics::RigidBodyBuilder,
+        geometry::{ColliderBuilder, ColliderSet, ContactEvent::Started, InteractionGroups},
     },
 };
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
 use crate::{
     components::{Direction, *},

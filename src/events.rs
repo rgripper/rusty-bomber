@@ -54,50 +54,59 @@ pub fn jump_state(
     input: Res<Input<KeyCode>>,
     mut app_exit_events: ResMut<Events<AppExit>>,
 ) -> Result<()> {
-    if app_state.current() != &AppState::StartMenu {
-        if input.just_pressed(KeyCode::Back) {
-            app_state.set_next(AppState::StartMenu)?;
-            game_state.set_next(GameState::Invalid)?;
-            map.init();
-        }
-    }
-    if app_state.current() == &AppState::Game {
-        if game_state.current() == &GameState::Game {
-            if input.just_pressed(KeyCode::Escape) {
-                game_state.set_next(GameState::Pause)?;
-            }
-        } else if game_state.current() == &GameState::Pause {
-            if input.just_pressed(KeyCode::Escape) {
+    match app_state.current() {
+        AppState::StartMenu => {
+            if input.just_pressed(KeyCode::Return) {
+                app_state.set_next(AppState::Game)?;
                 game_state.set_next(GameState::Game)?;
             }
-        } else if game_state.current() == &GameState::GameOver {
-            if input.just_pressed(KeyCode::Return) {
+            if input.just_pressed(KeyCode::Escape) {
+                app_exit_events.send(AppExit);
+            }
+        }
+        AppState::Game => {
+            if input.just_pressed(KeyCode::Back) {
                 app_state.set_next(AppState::StartMenu)?;
                 game_state.set_next(GameState::Invalid)?;
                 map.init();
             }
-            if input.just_pressed(KeyCode::Escape) {
-                app_exit_events.send(AppExit);
-            }
-        } else if game_state.current() == &GameState::Victory {
-            if input.just_pressed(KeyCode::Return) {
-                map.next();
-                app_state.set_next(AppState::Temporary)?;
-                game_state.set_next(GameState::Game)?;
-            }
-            if input.just_pressed(KeyCode::Escape) {
-                app_exit_events.send(AppExit);
+            match game_state.current() {
+                GameState::Invalid => {}
+                GameState::Game => {
+                    if input.just_pressed(KeyCode::Escape) {
+                        game_state.set_next(GameState::Pause)?;
+                    }
+                }
+                GameState::Pause => {
+                    if input.just_pressed(KeyCode::Escape) {
+                        game_state.set_next(GameState::Game)?;
+                    }
+                }
+                GameState::GameOver => {
+                    if input.just_pressed(KeyCode::Return) {
+                        app_state.set_next(AppState::StartMenu)?;
+                        game_state.set_next(GameState::Invalid)?;
+                        map.init();
+                    }
+                    if input.just_pressed(KeyCode::Escape) {
+                        app_exit_events.send(AppExit);
+                    }
+                }
+                GameState::Victory => {
+                    if input.just_pressed(KeyCode::Return) {
+                        map.next();
+                        app_state.set_next(AppState::Temporary)?;
+                        game_state.set_next(GameState::Game)?;
+                    }
+                    if input.just_pressed(KeyCode::Escape) {
+                        app_exit_events.send(AppExit);
+                    }
+                }
             }
         }
-    } else if app_state.current() == &AppState::StartMenu {
-        if input.just_pressed(KeyCode::Return) {
-            app_state.set_next(AppState::Game)?;
-            game_state.set_next(GameState::Game)?;
-        }
-        if input.just_pressed(KeyCode::Escape) {
-            app_exit_events.send(AppExit);
-        }
+        AppState::Temporary => {}
     }
+
     //info!("app state:{:?} game state:{:?}",app_state.current(),game_state.current());
     Ok(())
 }
