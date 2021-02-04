@@ -252,8 +252,6 @@ fn handle_contact_events(
 pub fn create_static_rigid_body(translation_x: f32, translation_y: f32) -> RigidBodyBuilder {
     RigidBodyBuilder::new_static()
         .translation(translation_x, translation_y)
-        .lock_rotations()
-        .lock_translations()
 }
 #[inline(always)]
 pub fn create_dyn_rigid_body(translation_x: f32, translation_y: f32) -> RigidBodyBuilder {
