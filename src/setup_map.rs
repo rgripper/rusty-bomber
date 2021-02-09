@@ -1,7 +1,7 @@
 use crate::{
     assets::*,
     components::{AnimateIndexs, Player},
-    entitys::{
+    entities::{
         create_bomb_number_buff_box, create_creature, create_green_way, create_last_wall,
         create_normal_box, create_normal_wall, create_player, create_portal_box,
         create_power_buff_box, create_speed_buff_box,

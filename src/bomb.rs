@@ -9,7 +9,7 @@ use crate::{
         Animation, Bomb, BombNumber, BombPower, Destructible, Direction, Ember, Fire, Player, Stop,
         Wall, FIRE_ANIMATE_TIME,
     },
-    entitys::{
+    entities::{
         create_bomb, create_bomb_number_buff, create_center_fire, create_ember, create_portal,
         create_power_buff, create_speed_buff,
     },
