@@ -60,14 +60,14 @@ Here’s how it works:
 
 ```rust
 fn movement_system(
-    query:Query<(要查询的组件),(查询的过滤器)>，
+    query:Query<(/*Query components*/),(/*Query filter*/)>，
     mut example_query:Query<&mut Transform,With<Player>>
 ){
     for item in query.iter(){
-        // 对查询内容进行操作
+        // Operate on the query results
     }
     for mut transform in example_query.iter_mut() {
-        // 就和迭代器一样使用
+        // Just use it like an iterator
     }
 }
 ```
