@@ -58,7 +58,7 @@ linker = "rust-lld.exe"
 rustflags = ["-Zshare-generics=off"]
 ```
 
-If it doesn't help, try deleting `.cargo` folder and using only `dynamic` feature. But dynamic links are slower than a switching linker. For other problems I suggest you go to Bevy's official Discord channel or can submit an issue.
+If it doesn't help, try deleting `.cargo` folder and using only `dynamic` feature. Dynamic links are faster than switching a linker. For other problems I suggest you go to Bevy's official Discord channel or can submit an issue.
 
 ### Query filters
 
