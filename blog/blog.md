@@ -1,3 +1,16 @@
+- [Foreword](#foreword)
+- [Motivation](#motivation)
+- [Rust dev environment](#rust-dev-environment)
+- [Compilation](#compilation)
+- [Query filters](#query-filters)
+- [QuerySet](#queryset)
+- [Events](#events)
+- [`system` chaining and code reuse](#-system--chaining-and-code-reuse)
+- [Implementing game states](#implementing-game-states)
+- [Rapier](#rapier)
+- [Multi-platform support](#multi-platform-support)
+- [Last part](#last-part)
+
 ### Foreword
 [Rusty Bomber](https://github.com/rgripper/rusty-bomber) is a clone of the famous `BomberMan` game. It only remotely resembles original game and uses some nice open source assets [some art resources](https://github.com/rgripper/rusty-bomber#assets-and-attribution) from [opengameart.org](https://opengameart.org/).
 
