@@ -104,7 +104,7 @@ Example:
 ```rust
 for (transform,speed,power) in query.iter() {
     if power.is_some() {
-        // This means that the results of this query are Player.
+        // This means that the results of this iter belong Player.
     }
 }
 ```
