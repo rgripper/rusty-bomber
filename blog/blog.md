@@ -1,37 +1,32 @@
 ### Foreword
+[Rusty Bomber](https://github.com/rgripper/rusty-bomber) is a clone of the famous `BomberMan` game. It only remotely resembles original game and uses some nice open source assets [some art resources](https://github.com/rgripper/rusty-bomber#assets-and-attribution) from [opengameart.org](https://opengameart.org/).
 
-[Rusty BomberMan](https://github.com/rgripper/rusty-bomber) is a bevy of the famous `BomberMan` game. Although it is a remake version, it actually looks completely different from the original game. The reason is that the art resources of the original game are not available, so we found [some art resources](https://github.com/rgripper/rusty-bomber#assets-and-attribution) form [opengameart.org](https://opengameart.org/). Thank you very much for these resources.
+### Motivation
+I saw a post on reddit by [@rgripper](https://github.com/rgripper) looking for someone to help with a project using bevy engine. I got in touch with him and started working on it with learning by doing.
 
-### Motivation for development
+### Rust dev environment
 
-The reason for developing this game was that I was visiting reddit , and I saw a post by [@rgripper](https://github.com/rgripper) looking for someone to work on the bevy project together. I got in touch with him and started working on it with a mindset of learning and doing.
+We used the latest version of Rust (Bevy docs recommended the nightly version, which enables much faster compilation).
+I coded in `vscode` + [`rust-analyzer`](https://github.com/rust-analyzer/rust-analyzer) (the latest release, I prefer to download source code and compile myself) + [`Tabline`](https://www.tabnine.com/) (optional) , alternatively you can use `Clion` + [`IntelliJ Rust`](https://www.jetbrains.com/rust/). 
 
-### Rust development environment recommendation
+### Compilation
 
-Use the latest version of Rust in development (recommended nightly version , this seems to be useful for quick compilation).
+Bevy’s web site mentions that the compilation is very fast.  And when version 0.4 was released, incremental compilation was even faster thanks to the dynamically linked feature, but it required a some extra configuration.
 
-The development environment recommends `vscode` + [`rust-analyzer`](https://github.com/rust-analyzer/rust-analyzer) (install the latest release, I prefer to download source code and compile it myself.) + [`Tabline`](https://www.tabnine.com/) (optional) , or `Clion` + [`IntelliJ Rust`](https://www.jetbrains.com/rust/). 
+The compilation speed for Rust so far is in no way impressive, even annoying at times. But when working with Bevy, each incremental build is within acceptable limits if you have a decent laptop.
 
-### Compile speed
-
-Bevy’s web site mentions that the compilation is very fast.  And when version 0.4 was released, incremental compilation was much faster thanks to the dynamically linked feature, but it required a number of configurations.
-
-The compilation speed of rust itself isn't fast, or even annoying at times, but during the bevy development iteration, each incremental build is within acceptable limits if you have a well-configured development environment for fast compilation.
-
-The configuration of my laptop is:
-
+Here is my specs:
 ```
 Intel(R) Core(TM) i5-8400 CPU @ 2.80GHz   2.81 GHz
 RAM	16.0 GB
 ```
-
-When the `dynamic` feature is enabled for compilation, each incremental compilation takes about 2.5 seconds. After adding other large dependencies, such as bevy_rapier, the incremental compilation speed will become longer, but still within acceptable limits, about 3.5 seconds. Five seconds is an acceptable amount for me to do a development iteration. During this development, the experience was great in terms of compile speed.
+When the `dynamic` feature is enabled, each incremental compilation takes about 2.5 seconds. After adding other large dependencies, such as bevy_rapier, the incremental compilation speed will become longer, but still within acceptable limits, about 3.5 seconds. Five seconds is an acceptable amount for me to do a development iteration. During this development, the experience was great in terms of compile speed.
 
 So how do you build a development environment that compiles quickly?
 
-The site explains in detail how to set up a fast development environment: https://bevyengine.org/learn/book/getting-started/setup/(in the final section, Enable Fast Compiles (Optional))
+Here is a detailed explanation: https://bevyengine.org/learn/book/getting-started/setup/ (in the final section, Enable Fast Compiles (Optional))
 
-There may be some strange questions in setting up the environment, such as this:
+You may stumble upon this puzzling error:
 
 ```shell
 error: process didn't exit successfully: `target\debug\bevy_salamanders.exe` (exit code: 0xc0000139, STATUS_ENTRYPOINT_NOT_FOUND)
@@ -50,11 +45,11 @@ linker = "rust-lld.exe"
 rustflags = ["-Zshare-generics=off"]
 ```
 
-After the change if there are similar strange mistakes, you can try to delete directly `.cargo` this folder , using only `dynamic` feature, dynamic links to compile speed is much greater than switching linker. And any other weird, unresolved issues, then you can submit an issue.
+If it doesn't help, try deleting `.cargo` folder and using only `dynamic` feature. But dynamic links are slower than a switching linker. For other problems I suggest you go to Bevy's official Discord channel or can submit an issue.
 
-### Query filter
+### Query filters
 
-Bevy has a number of query filters built in, and the 0.4 update has made it easier to use and read.
+Bevy has a number of query filters built-in, and the 0.4 update is event easier to use and read.
 
 Here’s how it works:
 
@@ -72,15 +67,19 @@ fn movement_system(
 }
 ```
 
-You can see the general usage [here](https://bevy-cheatbook.github.io/basics/queries.html#query-filters).
+There are some basic examples [here](https://bevy-cheatbook.github.io/basics/queries.html#query-filters).
 
-Common filters are `With<T>` , `Without<T>` , `Added<T>` , `Changed<T>` , `Mutated<T>` , `Or<T>` , where `Mutated` is a collection of `Added` and `Changed`, and `Added` only queries for newly added components, changed to query only `Changed` components in existing components, `Or` is more special, the use of several other filters are basically to reduce the scope of the query, but using `Or` can expand the scope of filtering, for example, to query the location and speed of players and creatures, you can define the query as:
+Common filters are `With<T>` , `Without<T>` , `Added<T>` , `Changed<T>` , `Mutated<T>` , `Or<T>` . `Added` only queries for newly added components, `Changed` is only for changes in existing components. `Mutated` is simply a mix of `Added` and `Changed`. `Or` is more special, and is used with other filters to reduce the scope of the query, but using `Or` can expand the scope of filtering. For example, to query the location and speed of players and creatures, you can define the query as:
 
 ```rust
     Query<(&Transform,&Speed),Or<(With<Player>,With<Creature>)>>
 ```
+  
+When a query has more than one component, it is necessary to use parentheses to pass the components in a tuple. 
 
-When a query has more than one component, it is necessary to use parentheses to pass more than one component as a tuple. Likewise, many filters pass parameters as tuples. Using `Or`, of course, is often used with `Option`, such as querying both the position and speed of the player and the creature, as well as the player specific component, the player’s power, you can write the query as follows:
+Likewise, when a query has more than one filter, it is also necessary to use parentheses to pass the filter in a tuple.
+
+When used with `Or`, it is usually used with `Option`. Such as querying both the position and speed of the player and the creature, as well as the player-specific component, the player’s power, you can write the query as follows:
 
 ```rust
     Query<(&Transform,&Speed,Option<&PlayerPower>),Or<(With<Player>,With<Creature>)>>
@@ -88,9 +87,17 @@ When a query has more than one component, it is necessary to use parentheses to 
 
 The resulting query with `Some(PlayerPower)` is definitely a `Player`, so treat it in the usual rust-like manner.
 
+Example:
+```rust
+for (transform,speed,power) in query.iter() {
+    if power.is_some() {
+        // This means that the results of this query are Player.
+    }
+}
+```
 ### QuerySet
 
-When queries in a `system` conflict with each other, a compiled run triggers a panic: `xxx has conflicting queries`. That’s where `QuerySet` comes in.
+When queries in a `system` conflict with each other, they cause a panic: `xxx has conflicting queries`. That’s where `QuerySet` is handy.
 
 For example, here are two queries:
 
@@ -99,18 +106,16 @@ For example, here are two queries:
     q1: Query<&Transform, Or<(With<Point>, With<Head>)>>,
 ```
 
-Both `Transform` and `Point` are queried, and `q1` contains the result of `q0`, but since `&mut` occur only once in the component of the query, there are no `&` other than `&mut`, so there is no conflict between the two queries.
+Both `Transform` and `Point` are queried, and `q1` contains the result of `q0`. But since `&mut` occur only once in the component of the query, there are no `&` other than `&mut`, so there is no conflict between the two queries.
 
-Take a look at the following two queries:
+Now take a look at the other two queries:
 
 ```rust
     mut q0: Query<(&mut Transform, &Point)>,
     q1: Query<&Transform, Or<(With<Point>, With<Head>)>>,
 ```
 
-Similar to the example above, but the difference is that the `Transform` component has one with `&mut` and the other with `&`, this is where a query conflict occurs.
-
-After query conflicts, that’s where `QuerySet` comes in.
+Here the first `Transform` component is declared with a `&mut` and in another - with `&`. This is where a query conflict occurs. To fix that we use `QuerySet`.
 
 Consider the following two components:
 
@@ -122,7 +127,7 @@ pub struct Point {
 }
 ```
 
-Suppose we need to write a system in which the position of each point changes according to the position of the previous entity:
+Suppose we need to write a system in which the position of each point changes in sync with the position of the previous entity:
 
 ```rust
 fn position(
@@ -134,8 +139,7 @@ fn position(
 ```
 
 We didn’t even implement any functionality for the system, and adding it directly to the App would have triggered query conflicts.
-
-Replace the above query with `QuerySet`:
+Now we replace the above query with `QuerySet`:
 
 ```rust
 fn position(
@@ -150,7 +154,7 @@ fn position(
 
 If you add it to the App without implementing anything, it will work. It’s also very easy to use, just pass the previous query as a tuple to `QuerSet` as a generic.
 
-What about the implementation? Without `QuerySet`, our implementation would look something like this:
+Without `QuerySet` our implementation would look like this:
 
 ```rust
 fn position(
@@ -167,7 +171,7 @@ fn position(
 }
 ```
 
-So with `QuerySet`, our content should look something like this:
+And with `QuerySet`:
 
 ```rust
 fn position(
@@ -182,21 +186,21 @@ fn position(
                 pre_transform.translation - Vec3::new(1.0, 1.0, 0.0) * 30.0,
             )
         } else {
-            warn!("Not find right transform!");
+            warn!("Not the right transform!");
         }
     }  
 }
 ```
 
-Before we run our code, `rust-analyzer` reported an error. We passed the `&mut points_query` in `q0_mut()` , and according to the borrowing check, the pointer of `points_query` can no longer be borrowed, so here we need to use unsafe. But before we use `unsafe`, we should make sure that our `unsafe` call is safe.
+Before we run our code, `rust-analyzer` reported an error. We passed the `&mut points_query` in `q0_mut()` , and according to the borrowing check, the pointer of `points_query` can no longer be borrowed, so here we need to use `unsafe`. But before that we should make sure that our `unsafe` call is actually safe.
 
 Looking at the documentation for the `iter_unsafe()` we'll be calling, you can see the `Safety` hint:
 
 > This allows aliased mutability. You must make sure this call does not result in multiple mutable references to the same component
 
-After analyzing our query, we were able to make sure this call does not result in multiple mutable references to the same component, so calling the unsafe function here is safe!
+We are sure and the code is safe!
 
-After adding unsafe, our code looks like this:
+Now our code looks like this:
 
 ```rust
 fn position(
@@ -212,19 +216,20 @@ fn position(
                 pre_transform.translation - Vec3::new(1.0, 1.0, 0.0) * 30.0,
             )
         } else {
-            warn!("not find right transform!");
+            warn!("Not the right transform!");
         }
     }
 }
 ```
 
-Once you resolve the borrowing error reported by `rust-analyzer`, run our `App` again, and you’ll get what you want.
+
+Once you resolve the borrowing error reported by rust-analyzer, run the App again, and you can see the results of the query.
 
 Talking about the `QuerySet` experience, since `rust-analyzer` wasn’t very friendly to the API support generated by process macros, the code complement experience for macro-generated API was pretty bad. Of course it's not the API's problem, it's our IDE ecology problem, lol.
 
 ### Events
 
-The 0.4 bevy event has one major drawback, as shown in the following example:
+In Bevy 0.4 the `EventReader` is not a real iterator and requires an event reference when calling `iter()`:
 
 ```rust
 pub fn game_events_handle(
@@ -239,9 +244,7 @@ pub fn game_events_handle(
 }
 ```
 
-The `EventReader` is not a real iterator and needs to pass a event reference when calling `iter()` , which feels redundant during use.
-
-Fortunately, `EventReader` has been improved in the upcoming 0.5 release, and after this [PR](https://github.com/bevyengine/bevy/pull/1244) merge, the `EventReader` call has gone like this:
+Fortunately, in the upcoming 0.5 release (after this [PR](https://github.com/bevyengine/bevy/pull/1244)) `iter` call will not need any arguments:
 
 ```rust
 pub fn game_events_handle(
@@ -255,8 +258,6 @@ pub fn game_events_handle(
 }
 ```
 
-It is important to note that not only has `EventReader` become a higher-level API (that is, a real system parameter) , but `Events` become a higher-level API, eliminating the need for a layer of `ResMut` on the outside.
-
 ### `system` chaining and code reuse
 
 There was a system example in the Events section that was different from the other general examples:
@@ -269,13 +270,13 @@ pub fn game_events_handle(
 }
 ```
 
-It has a `Result` return value, and if you add the system directly to the `App`, it will be reported as an error by `rust-analyzer` because bevy does not support systems with a return value. So how do you add a system with a return value to the `App`? To get rid of its return value, bevy provides us with a `fn chain(self, system: SystemB)` function that calls something like this:
+Its return value is a `Result` and if you add the system directly to the `App`, it will be reported as an error by `rust-analyzer`. That's because bevy does not support systems with a return value. So how do you add a system with a return value to the `App`? Bevy provides us with a `fn chain(self, system: SystemB)` function that can be used like this:
 
 ```rust
     .add_system(game_events_handle.system().chain(error_handler.system()))
 ```
 
-It can be ‘Unlimited refills’ and you can go on forever if you want. How do you write a chain system? You can see [here](https://bevy-cheatbook.github.io/basics/system-chaining.html#system-chaining). In addition to the usage shown here, you can even use:
+You can chain as many systems as you like. Chaining is explained [here](https://bevy-cheatbook.github.io/basics/system-chaining.html#system-chaining). You can also do this:
 
 ```rust
 pub fn body_point_translation_handle(
@@ -286,15 +287,12 @@ pub fn body_point_translation_handle(
 }
 ```
 
-Yes, you can add new parameters to each chain node, which greatly increases code flexibility and code reuse. This is one of my favorite bevy features that is both practical and flexible. Although in this project not much use, basically used to do error handling, but I believe that in a large project, this function can fully play its advantages, it’s probably because bevy is full of ergonomics designed like this that everyone’s excited about it.
+Yes, you can also add new parameters to each chain node. This chaining is one of my favorite bevy features that is both practical and flexible.
+Asynchronous chains are also possible (look at this [PR](https://github.com/bevyengine/bevy/pull/1393)).
 
-Of course, the current system is not perfect, to deal with certain situations we will probably need an asynchronous chain, fortunately, now has the [PR](https://github.com/bevyengine/bevy/pull/1393).
+### Implementing game states
 
-### How to implement different states of  the game
-
-We implemented a complete game flow in our project, including a menu interface for starting the game, a pause inside the game, and a failure when a player is killed by a bomb or touched by a creature, and the victory when the player finds the entrance to the next level. If you have experienced our game, you will find that the level is not designed, but only to achieve the effects of various props in the game, including the first level and the second level of the difference is only a few more creature. As a game, I’m not happy with this implementation, but as an experience, as a learning bevy, I’ve learned a lot. I even kept a random level implementation interface, but didn’t actually implement it. I had no prior experience with Roguelike’s algorithms, and I was just hoping that the next project would improve on that.
-
-To get back to the point, in order to implement such a complete game flow, I refer to [`Kataster`](https://github.com/Bobox214/Kataster)’s code and put the whole game flow in the body of the `AppState` enumeration:
+We implemented a complete game flow in our project, including a menu UI for starting the game, a pause inside the game, and a Gave Over UI when the player is killed by a bomb or touched by a creature, and Victory UI when the player finds the entrance to the next level. This game has just enough features to help learn Bevy and does not really have proper levels or different enemies. To implement the game flow I referred to [`Kataster`](https://github.com/Bobox214/Kataster)’s code and put all the possible game states in the body of `AppState` enum:
 
 ```rust
 pub enum AppState {
@@ -303,14 +301,14 @@ pub enum AppState {
 }
 ```
 
-Building the state of a game typically requires the following four steps:
+Building the game state typically consists of these:
 
-1. Add our game state as a resource to the game:
+1. Add game state as a resource:
 
-   ```rust
-   app.add_resource(State::new(AppState::StartMenu))
-   // We need to point out the state of the game when we initialize it.
-   ```
+    ```rust
+    app.add_resource(State::new(AppState::StartMenu))
+    // We need to point out the state of the game when we initialize it.
+    ```
 
 2. Initialize `StateStage`:
 
@@ -323,75 +321,75 @@ Building the state of a game typically requires the following four steps:
    )
    ```
 
-3. Processing stage
+3. Handle different states
+    ```rust
+    // The code that links up the pre step
+    .stage(APP_STATE_STAGE, |stage: &mut StateStage<AppState>| {
+            // With this closure, we can add systems to the different states of our game
+            stage
+                // start menu
+                // on_state_enter: This is usually used to add the load resource system for the game enter at this stage.
+                .on_state_enter(AppState::StartMenu, start_menu.system())
+                // on_state_update: This is usually used to add the logical system for the game update at this stage.
+                .on_state_update(AppState::StartMenu, button_system.system())
+                // on_state_exit: This is usually used to clear the next stage of the game does not need resources.
+                .on_state_exit(AppState::StartMenu, exit_ui_despawn.system())
+                // in game
+                .on_state_enter(AppState::Game, setup_map.system()))
+                // Similar to on_state_update, but you can set more than one at one time
+                .update_stage(AppState::Game, |stage: &mut SystemStage| {
+                    stage
+                    // None of the following methods came with SystemStage itself, but were implemented under the modules of our game project through custom trait to the SystemStage, just for the convenience of managing the modules.
+                        .physics_systems()
+                        .player_systems()
+                        .bomb_systems()
+                        .buff_systems()
+                        .creature_systems()
+                        .portal_systems()
+                })
+                .on_state_exit(AppState::Game, exit_game_despawn.system())
+        });
+    ```
 
-   ```rust
-   // The code that links up the pre step
-   .stage(APP_STATE_STAGE, |stage: &mut StateStage<AppState>| {
-           // With this closure, we can add systems to the different states of our game
-           stage
-               // start menu
-               // on_state_enter: This is usually used to add the load resource system for the game enter at this stage.
-               .on_state_enter(AppState::StartMenu, start_menu.system())
-               // on_state_update: This is usually used to add the logical system for the game update at this stage.
-               .on_state_update(AppState::StartMenu, button_system.system())
-               // on_state_exit: This is usually used to clear the next stage of the game does not need resources.
-               .on_state_exit(AppState::StartMenu, exit_ui_despawn.system())
-               // in game
-               .on_state_enter(AppState::Game, setup_map.system()))
-               // Similar to on_state_update, but you can set more than one at one time
-               .update_stage(AppState::Game, |stage: &mut SystemStage| {
-                   stage
-                   // None of the following methods came with SystemStage itself, but were implemented under the modules of our game project through custom trait to the SystemStage, just for the convenience of managing the modules.
-                       .physics_systems()
-                       .player_systems()
-                       .bomb_systems()
-                       .buff_systems()
-                       .creature_systems()
-                       .portal_systems()
-               })
-               .on_state_exit(AppState::Game, exit_game_despawn.system())
-       });
-   ```
+4. Map state machine transitions
 
-4. Handle game state transitions
+    ```rust
+    // In addition, build a system to handle the jump of game state
+    pub fn jump_state(
+        mut app_state: ResMut<State<AppState>>,
+        input: Res<Input<KeyCode>>,
+        mut app_exit_events: ResMut<Events<AppExit>>,
+    ) -> Result<()> {
+        // Using pattern matching makes it very clear that our game state transitions will be handled
+        match app_state.current() {
+            AppState::StartMenu => {
+                if input.just_pressed(KeyCode::Return) {
+                    // The method set_next is a jump from the current state to the specified state
+                    app_state.set_next(AppState::Game)?;
+                }
+                if input.just_pressed(KeyCode::Escape) {
+                    app_exit_events.send(AppExit);
+                }
+            }
+            AppState::Game => {
+                if input.just_pressed(KeyCode::Back) {
+                    app_state.set_next(AppState::StartMenu)?;
+                    map.init();
+                }
+            }
+        }
+        Ok(())
+    }
+    ```
 
-   ```rust
-   // In addition, build a system to handle the jump of game state
-   pub fn jump_state(
-       mut app_state: ResMut<State<AppState>>,
-       input: Res<Input<KeyCode>>,
-       mut app_exit_events: ResMut<Events<AppExit>>,
-   ) -> Result<()> {
-       // Using pattern matching makes it very clear that our game state transitions will be handled
-       match app_state.current() {
-           AppState::StartMenu => {
-               if input.just_pressed(KeyCode::Return) {
-                   // The method set_next is a jump from the current state to the specified state
-                   app_state.set_next(AppState::Game)?;
-               }
-               if input.just_pressed(KeyCode::Escape) {
-                   app_exit_events.send(AppExit);
-               }
-           }
-           AppState::Game => {
-               if input.just_pressed(KeyCode::Back) {
-                   app_state.set_next(AppState::StartMenu)?;
-                   map.init();
-               }
-           }
-       }
-       Ok(())
-   }
-   ```
+Let’s talk about step three, which will probably be replaced by a [new scheduler](https://github.com/bevyengine/bevy/pull/1144) in later versions, but that’s far away in the future, and until then, we need new blogs which someone will write about the issue. 
 
-With these four steps, you can add different states to your game. Now let’s talk about step three, which will probably be replaced by a [new scheduler](https://github.com/bevyengine/bevy/pull/1144) in later versions, but that’s a long time away, until then, new blogs are needed.
 
 ### Rapier
 
-`Rapier` is a very rich physical engine, and the content of this project is only a small part of it, and this article has only selected some meaningful records from it. If you want to learn more about `rapier`, my advice is to read the [official documentation](https://rapier.rs/docs/user_guides/rust/getting_started) first and then go to the `bevy_rapier` group in [discord](https://discord.gg/VuvMUaxh) to learn more.
+`Rapier` is a powerful physics engine, and this project barely touched it. You can learn more about `rapier` in the [official documentation](https://rapier.rs/docs/user_guides/rust/getting_started) and in `bevy_rapier` group on [discord](https://discord.gg/VuvMUaxh) to learn more.
 
-Two common components of `Rapier` are the `RigidBody` and the `Collider`. Each entity in bevy can have only one rigid body, while a collider can have multiple, such as a character’s head, arms, and legs, all of which can be represented by a single collider.
+Two common components of `Rapier` are `RigidBody` and `Collider`. Each entity in Bevy can only have one rigid body, while a collider can have multiple, such as a character’s head, arms, and legs.
 
 The way to create a rigid body is simple:
 
@@ -409,9 +407,19 @@ RigidBodyBuilder::new_dynamic()
 .lock_translations()// (optional) lock the rigid body for translation
 ```
 
-> To create a `RigidBody`, you need to specify its location, because within `bevy_rapier` there is a system for transforming the `RigidBody`’s location and the entity’s `Transform`, which means we no longer need to manage the entity’s `Transform`, only through the rigid body to manage the entity’s speed, position, rotation, force, and so on.
+To create a `RigidBody`, you need to specify its translation. Like this:
 
-The way to create colliders is also simple:
+```rust
+RigidBodyBuilder::new_dynamic()        
+.translation(translation_x, translation_y)
+...// more other operation  
+```
+
+Since `bevy_rapier` has a system for sync `RigidBody`’s transform(this is not a component, it's a rigidbody field) to the entity’s `Transform`(a bevy component). 
+
+Which means we no longer need to manage the entity’s `Transform`(bevy component), only through the rigidbody to manage the entity’s speed, position, rotation, force, and so on.
+
+Here we create a collider:
 
 ```rust
 // Rapier has a number of options, and since we only use two of them in our game projects, we’re only going to talk about these two categories
@@ -421,9 +429,12 @@ ColliderBuilder::cuboid(hx, hy)
 ColliderBuilder::ball(radius)
 ```
 
-> Note: the required parameters for building a cuboid collider are half height and half width, not full height and full width.
+> The parameters for building a cuboid collider are half height and half width, not full height and full width.
 
-For a single collider, a rigid body and a collider can be directly inserted as a component into an existing entity(The method of adding multiple colliders to a rigid body is slightly different from the method of adding a single collider to a rigid body, see [here](https://github.com/dimforge/bevy_rapier/blob/master/bevy_rapier2d/examples/multiple_colliders2.rs).):
+
+For a single collider with a rigid body, they can be directly inserted as components into an existing entity.
+
+But for multiple colliders with a rigid body is slightly different, see [here](https://github.com/dimforge/bevy_rapier/blob/master/bevy_rapier2d/examples/multiple_colliders2.rs).
 
 ```rust
 fn for_player_add_collision_detection(
@@ -452,18 +463,16 @@ fn for_player_add_collision_detection(
 }
 ```
 
-In our game, we use final loading, that is, after all map resources are loaded, we insert the corresponding rigid body and collider into the entity without rigid body and collision body.
+After all map resources are loaded, we insert the corresponding rigid body and collider into the entity without rigid body and collision body.
 
-The last two filters, `Without<RigidBodyHandleComponent>`and `Without<ColliderHandleComponent>`, are actually because bevy has a system inside that transforms the `Builder` into a `HandleComponent`. When we insert the builder into the entity, the system then converts it into a handle component in some internal way. So in order to prevent our query results have been inserted in the handle component of the entity, so we need to add this filter.
-
-Adding these isn’t enough to get the physics engine running in our game, mainly because `bevy_rapier` is still being imported as an external crate, in the future, if `bevy_rapier` integrate into the bevy’s physical engine, you won’t need to do this:
+Adding these isn’t enough to get the physics engine running in our game, mainly because `bevy_rapier` is still being imported as an external crate. Right now you have to manually add this plugin:
 
 ```rust
     app
         .add_plugin(RapierPhysicsPlugin)
 ```
 
-With this simple setup, the physics engine was successfully enabled in our game. One thing in particular to note is that in our game, creatures can collide with each other, so how do we do that? Just Point to the solution group or collision group when creating the collider.
+With the physics engine successfully enabled in our game, we need to allow creatures collide with each other:
 
 ```rust
     ColliderBuilder::cuboid(HALF_TILE_WIDTH, HALF_TILE_WIDTH)
@@ -475,9 +484,9 @@ With this simple setup, the physics engine was successfully enabled in our game.
         .collision_groups(InteractionGroups::new(WAY_GROUPS, NONE_GROUPS))
 ```
 
-Before going any further into the difference between a solver group and a collision group, we need to understand the rules for constructing an interaction group. We need to provide two parameters for the interaction group's `new()`, the first of which is to specify which group the collider belongs to, the required parameter type is a `u16`, and the second parameter, which sets the collider and which groups of Colliders Will Interact, is also a `u16`.
+Before going any further into the difference between a solver group and a collision group, we need to understand the rules for constructing an interaction group. We need two parameters for the interaction group's `new()`, the first (`u16`) - to specify which group the collider belongs to, and the second (`u16`) - the collider and which a groups of Colliders will interact.
 
-For the second parameter, it’s easy to understand how settings interact with a single collider, but how do they interact with multiple colliders? This is the beauty of setting the parameter type to `u16`, for example:
+For the second parameter, it’s easy to understand how settings interact with a single collider, but how about multiple colliders? This is the beauty of setting the parameter type to `u16`, for example:
 
 ```rust
 const CREATURE_GROUPS: u16 = 0b0010;
@@ -487,9 +496,11 @@ const WAY_GROUPS: u16 = 0b1000;
 const NONE_GROUPS: u16 = 0b0000;
 ```
 
-The constant is the interaction group variable used in our game, and `0b0011` is represent the `CREATURE` and `PLAYER`, and the number is created using`CREATURE_GROUPS` and `PLAYER_GROUPS` through `&` .
+The difference between a solution group and a collision group: 
 
-As for the difference between the solution group and the collision group, the solution group is to solve the force situation, and the interaction group will participate in the force solution. The collision group manages collision events, which can be received and processed through `Res<eventqueue>`.
+If a group is a solution group, then it should participate in all force analysis; 
+
+If a group is a collision group, then it should participate in all collision events, these collision events are received and processed through `Res<eventqueue>`.
 
 And `user_data`, which is passed into the collider builder when the collider is inserted, can be used to obtain the entity using the following method:
 
@@ -499,9 +510,9 @@ let entity = Entity::from_bits(user_data as u64);
 
 Where does `user_data` come from? From the collision event we get an index that can be accessed via the `Res<ColliderSet>` 's `get()` method user, which is cumbersome and I think the least usable part of `bevy_rapier` so far.
 
-In addition, if you run your game from here, you’ll find that your character, as well as the other dynamic rigid bodies in the screen, will receive a gravitational force , we don’t need this gravity, so we need to change the gravity to zero.
+In addition, if you run the game from here, you’ll find that your character, as well as the other dynamic rigid bodies on the screen, will receive a gravitational force. We don’t need this gravity, so we need to change it to zero.
 
-The current version modifies the gravity of the physical engine by adding a startup system like this:
+Ccurrent version modifies the gravity by adding a startup system like this:
 
 ```rust
 fn setup(
@@ -511,17 +522,15 @@ fn setup(
 }
 ```
 
-Adding this system to `startup_system()` requires only run once when game start-up.
+This system is added to `startup_system()`, and only run once.
 
 ### Multi-platform support
 
-Our game now supports WASM as well as normal desktop platforms, which is no shame since Bevy’s voice wasn’t supported and then wasn’t implemented. After finishing the game to play a little friends, are asking me if there is a mobile version. Bevy’s support plan includes mobile, and while there are few changes to be made to move from desktop to Mobile, before we get to the unsupported mobile, let’s see how we support WASM.
+Our game now runs on WASM as well as usual desktop platforms. Since Bevy’s doesn't support audio in WASM version there is no audio in our game. Bevy’s support platforms includes mobile, and while there are few changes to port to mobile, we decided to stick with WASM.
 
-Our game now supports WASM as well as normal desktop platforms, since Bevy’s wasn’t supported audio in WASM version and then we wasn’t implemented this in our game. Bevy’s support platforms includes mobile, and while there are few changes to be made to move from desktop to Mobile, before we talk about this, let’s see how we support WASM.
+The bevy rendering backend uses the WGPU, although the WGPU rendering backend supports WASM, for some reason it didn't work with Bevy, the bevy WASM project we have been able to refer to is basically based on `bevy_webgl2`.
 
-The bevy rendering backend uses the WGPU, although the WGPU rendering backend supports compiling to WASM, for some reason it’s not loaded on bevy, the bevy WASM project we have been able to refer to is basically based on `bevy_webgl2` this crate.
-
-It’s also convenient to add WASM support, but in addition to adding regular HTML files like other WASM project, you need to make the following changes:
+To support WASM you need to also put these:
 
 ```rust
     #[cfg(target_arch = "wasm32")]
@@ -553,26 +562,11 @@ web = [
 ]
 ```
 
-Basically this is set up, the rest of the settings are related to HTML, need a little lost knowledge of WASM development. How to use toolchains such as `cargo make` at compile time is also learned from the knowledge developed by WAMS. As for how to deploy to github’s page service, which I don’t know at all, this part of our game was deployed by my partner,`@rgripper` .
-
-For mobile support, Android, for example, if not touch ah, buttons and the like, the official example is actually given, on the basis of the desktop is very convenient to migrate. In addition to the basic android development environment (see [`cargo mobile`](https://github.com/BrainiumLLC/cargo-mobile)’s READEME for details in this section) , just make the following changes to support mobile, even if WGPU support for WASM is later fixed, only the following modifications should be required to support WASM:
-
-```rust
-#[bevy_main]
-fn main() {
-    App::build()
-        .insert_resource(Msaa { samples: 2 })
-        .add_plugins(DefaultPlugins)
-        .add_startup_system(setup.system())
-        .run();
-}
-```
-
+Supporting web requires tinkering with HTML, `cargo make` and we even used a js/wasm bundler to deploy on Github Pages.
+There are official examples for use on Android, (see [`cargo mobile`](https://github.com/BrainiumLLC/cargo-mobile)’s README for details).
 ### Last part
 
-Many thanks to Rapier author [@Sébastien Crozet](https://github.com/sebcrozet), I’m using the physics engine for the first time, and there are a lot of things I don’t understand that I’ve heard back from people in the discord group.
+Many thanks to Rapier author [@Sébastien Crozet](https://github.com/sebcrozet). I’m using the physics engine for the first time, and there are a lot of things I don’t understand that were kindly provided by people in the discord group.
 
-I would also like to thank my partner [@rgripper](https://github.com/rgripper). Without our cooperation, this project would not have been possible.
-
-I enjoyed developing with my partner and we learned a lot together on this project. If you want to learn about Bevy through practice, then join us and we welcome you to work with us on our next game.
-
+I would also like to thank my coding buddy [@rgripper](https://github.com/rgripper). Without our cooperation, this project would not have been possible.
+I enjoyed coding with him and we learned a lot together on this project. If you want to learn about Bevy through practice, feel free to contact us and maybe we code our next game with you.
