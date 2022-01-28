@@ -52,7 +52,7 @@ cargo run --features native
 
 ## Assets and Attribution
 
-bomb_party_v4.png
+![Bomb Party v4 screenshot](assets/bomb_party_v4.png)
 
 Made by
 most: [usr_share](https://opengameart.org/users/usrshare) at
